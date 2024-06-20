@@ -171,15 +171,14 @@ create Tag Directories in batch mode, first create a tsv file called a
 tagkey, containing the names for each input file and each desired output
 tag directory.
 
-Format of the tagkey file: TSV <br> file1-tagdir \< file1.nosuffix.sam
-<br> file2-tagdir \< file2.nosuffix.sam <br> file3-tagdir \<
-file3.nosuffix.sam <br>
+Format of the tagkey file: TSV <br> file1-tagdir ile1.nosuffix.sam <br>
+file2-tagdir ile2.nosuffix.sam <br> file3-tagdir ile3.nosuffix.sam <br>
 
 Then run HOMER `batchMakeTagDirectory.pl` for each species. Example with
 hg38:
 
 ``` bash
-batchMakeTagDirectory tagkey -genome hg38 -cpu 8 -fragLength 150
+batchMakeTagDirectory.pl tagkey -genome hg38 -cpu 8 -fragLength 150
 ```
 
 ## Visualize with BigWigs
@@ -198,10 +197,10 @@ makeBigWig.pl ${file}-tagdir/ hg38 -webdir /path/to/webdirectory -url http://web
 ### Histograms at TSS
 
 Recommended parameters for H3K79me2: Make histogram of size 10kb
-centered at TSS, with bin size 50bp.
+centered at TSS, with bin size 25bp.
 
 ``` bash
-annotatePeaks.pl tss hg38 -size 10000 -hist 50 -d ${file}1-tagdir ${file}2-tagdir > histogram_tss_hg38_samples.txt
+annotatePeaks.pl tss hg38 -size 10000 -hist 25 -d ${file}1-tagdir ${file}2-tagdir > histogram_tss_hg38_samples.txt
 ```
 
 ### Peak Finding
@@ -256,14 +255,15 @@ hist_tss_hg38_ChIPRx <- read.delim("~/Research/ChIP-Rx/hist_tss_hg38_10kb_ChIPRx
 My sample names are named by the convention:
 Jurkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir
 
-Each sample has 3 columns: Coverage:
-urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir.Coverage Plus Strand Tags:
-urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags Minus Strand Tags:
-urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags.1
+Each sample has 3 columns: Coverage: urkat_K79_0\_R1_H3K79me2.dual.hg38-
+<br> Plus Strand Tags: urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags
+<br> Minus Strand Tags: urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags.1
+<br>
 
 The first column currently contains the command used to generate the
 histogram TSV file. To process the histogram file for easier plotting, I
-modify column names, convert to tidyR format, then
+modify column names, convert to tidyR format, then split the file name
+into columns for each treatment condition/replicate/etc.
 
 ``` r
 process_histograms <- function(x, .x) {
@@ -291,7 +291,8 @@ Get in tidy format
 hist_tss_hg38_ChIPRx_tidy <- process_histograms(hist_tss_hg38_ChIPRx)
 ```
 
-Split by regex:
+Split by regex: split sample names into multiple columns `mark`,
+`inhibition`, `replicate`, and `antibody`
 
 ``` r
 # when debugging, add too_few = "debug" as last argument in separate_wider_regex()
@@ -307,13 +308,17 @@ hist_tss_hg38_ChIPRx_sep <- hist_tss_hg38_ChIPRx_tidy %>% separate_wider_regex(c
   ".Coverage"))
 ```
 
+Column inhibition describes the % of Jurkat cells treated with DOT1
+inhibitor. Need to set this variable as a factor, and specify the order
+explicitly.
+
 ``` r
 hist_tss_hg38_ChIPRx_sep$inhibition <- factor(hist_tss_hg38_ChIPRx_sep$inhibition,levels = c("100", "75", "50", "25", "0"))
 ```
 
 #### Read normalized plotting
 
-Also in Supplemental Figure 19.
+Also in Supplemental Figures.
 
 ``` r
 ggplot(data = hist_tss_hg38_ChIPRx_sep) + 
