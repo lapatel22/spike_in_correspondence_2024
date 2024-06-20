@@ -39,6 +39,15 @@ spike_correspondence_figure1a
   - <a href="#normalize-to-spike-in-ip-and-inputs"
     id="toc-normalize-to-spike-in-ip-and-inputs">Normalize to spike-in IP
     and inputs</a>
+  - <a href="#normalize-to-spike-in-ip-and-inputs-1"
+    id="toc-normalize-to-spike-in-ip-and-inputs-1">normalize to spike-in IP
+    and inputs</a>
+    - <a href="#quantify-signal" id="toc-quantify-signal">Quantify signal</a>
+    - <a href="#scale-points-from-0-1" id="toc-scale-points-from-0-1">Scale
+      points from 0-1</a>
+    - <a href="#make-line-of-expected-signal"
+      id="toc-make-line-of-expected-signal">Make line of expected signal:</a>
+    - <a href="#add-replicates" id="toc-add-replicates">Add replicates</a>
 
 ``` r
 library(tidyverse)
@@ -171,8 +180,9 @@ create Tag Directories in batch mode, first create a tsv file called a
 tagkey, containing the names for each input file and each desired output
 tag directory.
 
-Format of the tagkey file: TSV <br> file1-tagdir ile1.nosuffix.sam <br>
-file2-tagdir ile2.nosuffix.sam <br> file3-tagdir ile3.nosuffix.sam <br>
+Format of the tagkey file: TSV <br> file1-tagdir file1.nosuffix.sam <br>
+file2-tagdir file2.nosuffix.sam <br> file3-tagdir file3.nosuffix.sam
+<br>
 
 Then run HOMER `batchMakeTagDirectory.pl` for each species. Example with
 hg38:
@@ -255,10 +265,10 @@ hist_tss_hg38_ChIPRx <- read.delim("~/Research/ChIP-Rx/hist_tss_hg38_10kb_ChIPRx
 My sample names are named by the convention:
 Jurkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir
 
-Each sample has 3 columns: Coverage: urkat_K79_0\_R1_H3K79me2.dual.hg38-
-<br> Plus Strand Tags: urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags
-<br> Minus Strand Tags: urkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags.1
-<br>
+Each sample has 3 columns: Coverage:
+Jurkat_K79_0\_R1_H3K79me2.dual.hg38- <br> Plus Strand Tags:
+Jurkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags <br> Minus Strand Tags:
+Jurkat_K79_0\_R1_H3K79me2.dual.hg38-tagdir…Tags.1 <br>
 
 The first column currently contains the command used to generate the
 histogram TSV file. To process the histogram file for easier plotting, I
@@ -340,7 +350,7 @@ ggplot(data = hist_tss_hg38_ChIPRx_sep) +
     3.5.0.
     ℹ Please use the `legend.position.inside` argument of `theme()` instead.
 
-![](spike_correspondence_figure1a_files/figure-commonmark/unnamed-chunk-25-1.png)
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_readnorm_histplot-1.png)
 
 #### Quantify Signal: Fig 1a, left
 
@@ -388,7 +398,7 @@ AUC_peaks %>%
   theme(legend.position = "none")
 ```
 
-![](spike_correspondence_figure1a_files/figure-commonmark/unnamed-chunk-28-1.png)
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_readnorm_dotplot-1.png)
 
 Scale points from 0-1
 
@@ -438,7 +448,7 @@ ggplot() +
   theme(legend.position = "none")
 ```
 
-![](spike_correspondence_figure1a_files/figure-commonmark/unnamed-chunk-33-1.png)
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_readnorm_publish_dotplot-1.png)
 
 #### Calculated Rsquared
 
@@ -490,3 +500,206 @@ hist_tss_hg38_ChIPRx_cov$Distance_from_tss <- hist_tss_hg38_ChIPRx$Distance_from
 ChIP-Rx normalization formula:
 
 Normalization factor = (1/Fly reads)\*1000000
+
+## normalize to spike-in IP and inputs
+
+``` r
+chiprx_fly_ipinput_norm <- hist_tss_hg38_ChIPRx_cov
+
+chiprx_fly_ipinput_norm$K79_0_R1_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_0_R1_H3K79me2.Coverage*(1/5.321795)*(1.3450)
+chiprx_fly_ipinput_norm$K79_0_R2_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_0_R2_H3K79me2.Coverage*(1/6.174764)*(1.1639)
+
+chiprx_fly_ipinput_norm$K79_25_R1_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_25_R1_H3K79me2.Coverage*(1/6.148836)*(1.1957)
+chiprx_fly_ipinput_norm$K79_25_R2_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_25_R2_H3K79me2.Coverage*(1/8.119575)*(1.1165)
+
+chiprx_fly_ipinput_norm$K79_50_R1_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_50_R1_H3K79me2.Coverage*(1/7.059974)*(1.1198)
+chiprx_fly_ipinput_norm$K79_50_R2_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_50_R2_H3K79me2.Coverage*(1/8.962803)*(1.3628)
+
+chiprx_fly_ipinput_norm$K79_75_R1_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_75_R1_H3K79me2.Coverage*(1/8.449487)*(1.0000)
+chiprx_fly_ipinput_norm$K79_75_R2_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_75_R2_H3K79me2.Coverage*(1/10.323964)*(1.3824)
+
+chiprx_fly_ipinput_norm$K79_100_R1_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_100_R1_H3K79me2.Coverage*(1/14.655924)*(1.3777)
+chiprx_fly_ipinput_norm$K79_100_R2_H3K79me2.Coverage <- 
+  hist_tss_hg38_ChIPRx_cov$K79_100_R2_H3K79me2.Coverage*(1/8.891320)*(1.0000)
+```
+
+``` r
+chiprx_fly_ipinput_norm_tidy <- chiprx_fly_ipinput_norm %>% pivot_longer(cols = -"Distance_from_tss", names_to = "Sample", values_to = "Coverage")
+#head(hist_tss_hg38_cov_tidy)
+```
+
+``` r
+chiprx_fly_ipinput_norm_tidy_sep <- chiprx_fly_ipinput_norm_tidy %>% separate_wider_regex(cols = Sample, patterns = c(
+  mark = ".+",
+  "\\_", 
+  inhibition = ".+", 
+  "\\_", 
+  replicate = ".+", 
+  "\\_", 
+  antibody = ".+", 
+  ".Coverage"))
+```
+
+``` r
+chiprx_fly_ipinput_norm_tidy_sep$inhibition <- factor(chiprx_fly_ipinput_norm_tidy_sep$inhibition,levels = c("100", "75", "50", "25", "0"))
+```
+
+``` r
+ggplot(data = chiprx_fly_ipinput_norm_tidy_sep) + 
+  aes(x = Distance_from_tss, y = Coverage, group = interaction(inhibition, replicate), color = inhibition) +
+  geom_line(linewidth = 1.2, alpha = 0.9) + 
+  labs(title = "Histogram of ChIP-Rx H3K79me2 around TSS", 
+       subtitle = "spike-in IP and input normalized", 
+       x = "Distance from TSS") + 
+  scale_color_manual(values = colorRampPalette(brewer.pal(9, "GnBu"))(9)[4:9], 
+                      name = "% Inhibited Cells", 
+                     labels = c("100%", "75%", "50%", "25%", "0%")) + 
+   theme(legend.position = c(0.16, 0.69), 
+                          legend.background = element_rect(
+                                  size=0.7, linetype="solid", 
+                                  colour ="grey20"))
+```
+
+    Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+    ℹ Please use the `linewidth` argument instead.
+
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_spikenorm_histplot-1.png)
+
+``` r
+ggplot(data = chiprx_fly_ipinput_norm_tidy_sep) + 
+  aes(x = Distance_from_tss, y = Coverage, group = interaction(inhibition, replicate), color = inhibition) +
+  geom_line(linewidth = 1.2, alpha = 0.9) + 
+  labs(title = "Histogram of ChIP-Rx H3K79me2 around TSS", 
+       subtitle = "spike-in IP and input normalized", 
+       x = "Distance from TSS") + 
+  scale_color_manual(values = colorRampPalette(brewer.pal(9, "GnBu"))(9)[4:9], 
+                      name = "% Inhibited Cells", 
+                     labels = c("100%", "75%", "50%", "25%", "0%")) + 
+   theme(legend.position = c(0.16, 0.69), 
+                          legend.background = element_rect(
+                                  size=0.7, linetype="solid", 
+                                  colour ="grey20")) +
+  facet_wrap(~ replicate)
+```
+
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_spikenorm_histplotreps-1.png)
+
+### Quantify signal
+
+``` r
+samples <- unique(chiprx_fly_ipinput_norm_tidy$Sample)
+
+colnames(hist_tss_hg38_ChIPRx)[1] <- "Distance_from_tss"
+
+x <- hist_tss_hg38_ChIPRx$Distance_from_tss
+
+AUC_peaks <- matrix(data = "", nrow = length(samples), ncol = 1)
+AUC_peaks <- data.frame(AUC_peaks, row.names = samples)
+
+for (i in 1:length(samples)) {
+
+  y <- chiprx_fly_ipinput_norm_tidy %>% 
+    filter(Sample == samples[i]) %>%
+    select(Coverage)
+  y <- pull(y, Coverage)
+
+AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
+
+}
+```
+
+``` r
+AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+
+percent_treated <- rep(c(0, 100, 25, 50, 75), each = 2)
+AUC_peaks$percent_treated <- as.numeric(percent_treated)
+```
+
+``` r
+AUC_peaks %>%
+ ggplot(aes(x = percent_treated, y = AUC_peaks, color = as.factor(percent_treated))) +
+  geom_point(size = 5, alpha = 0.7) +
+  scale_color_manual(
+    values = colorRampPalette(brewer.pal(9, "GnBu"))(8)[3:8],
+    name = "% Inhibited Cells", 
+    labels = c("0%", "25%", "50%", "75%", "100%"))  + 
+  theme_classic() + 
+  labs(title = "H3K79me2 Signal at TSS", 
+       subtitle = "Spike-in IP and input Normalized",
+       x = "% Treated Cells", 
+       y = "H3K79me2 Signal")  + 
+  theme(legend.position = "none")
+```
+
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_spikenorm_dotplot-1.png)
+
+### Scale points from 0-1
+
+``` r
+avg_0treated <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1]))
+avg_100treated <- mean(c(AUC_peaks[3,1], AUC_peaks[4,1]))
+avg_25treated <- mean(c(AUC_peaks[5,1], AUC_peaks[6,1]))
+avg_50treated <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1]))
+avg_75treated <- mean(c(AUC_peaks[9,1], AUC_peaks[10,1]))
+```
+
+``` r
+AUC_peaks <- AUC_peaks %>%
+  mutate(minmaxnorm = (AUC_peaks-avg_100treated)/(avg_0treated-avg_100treated) )
+```
+
+``` r
+minmaxnorm_avg_0treated <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3]))
+minmaxnorm_avg_100treated <- mean(c(AUC_peaks[3,3], AUC_peaks[4,3]))
+minmaxnorm_avg_25treated <- mean(c(AUC_peaks[5,3], AUC_peaks[6,3]))
+minmaxnorm_avg_50treated <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3]))
+minmaxnorm_avg_75treated <- mean(c(AUC_peaks[9,3], AUC_peaks[10,3]))
+```
+
+### Make line of expected signal:
+
+``` r
+observed_line <- c(minmaxnorm_avg_100treated, minmaxnorm_avg_75treated, minmaxnorm_avg_50treated, minmaxnorm_avg_25treated, minmaxnorm_avg_0treated)
+
+expected_line <- c(0, 0.25, 0.5, 0.75, 1)
+
+percent_treated_mean <- rep(c(100, 75, 50, 25, 0))
+
+observed_vs_expected <- data.frame(cbind(percent_treated_mean, expected_line, observed_line))
+```
+
+``` r
+get_Rsquared(AUC_peaks)
+```
+
+    [1] 0.8909891
+
+### Add replicates
+
+``` r
+ggplot() +
+  geom_point(data = AUC_peaks, 
+             aes(x = as.numeric(percent_treated), y = minmaxnorm), 
+             size = 6, color = "grey30", alpha = 0.8) + 
+  scale_color_manual(values = colorRampPalette(brewer.pal(9, "GnBu"))(9)[4:9], 
+                      name = "% Inhibited Cells", 
+                     labels = c("100%", "75%", "50%", "25%", "0%")) +
+  geom_line(data = observed_vs_expected, 
+            aes(x = as.numeric(percent_treated_mean), y = expected_line)) +
+ labs(title = "Relative H3K79me2 Signal at TSS", 
+       subtitle = "Spike-in IP and input Normalized, scaled 0-1",
+       x = "% Treated Cells", 
+       y = "Relative H3K79me2 Signal") + 
+  theme(legend.position = "none")
+```
+
+![](spike_correspondence_figure1a_files/figure-commonmark/ChipRx_spikenorm_publish_dotplot-1.png)
