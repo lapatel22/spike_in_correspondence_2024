@@ -1,24 +1,58 @@
----
-title: "spike_correspondence_figure3"
-format: gfm
-toc: true
-theme: cosmo
+spike_correspondence_figure3
+================
 
-knit: (function(input_file, encoding) {
-    out_dir <- 'docs';
-    rmarkdown::render(input_file,
-      encoding=encoding,
-      output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
----
+- <a href="#spike-intarget-ratios-in-all-inputs"
+  id="toc-spike-intarget-ratios-in-all-inputs">spike-in/target ratios in
+  all inputs</a>
+  - <a href="#function-to-calculate-variation-in-inputs-within-each-paper"
+    id="toc-function-to-calculate-variation-in-inputs-within-each-paper">Function
+    to calculate variation in inputs within each paper</a>
+  - <a href="#apply-function-to-each-dataset-within-dataframe"
+    id="toc-apply-function-to-each-dataset-within-dataframe">Apply function
+    to each dataset within dataframe</a>
+  - <a href="#plot-input-spike-intarget-relative-variation"
+    id="toc-plot-input-spike-intarget-relative-variation">plot input
+    spike-in/target relative variation</a>
+- <a href="#revisions-plot" id="toc-revisions-plot">Revisions plot</a>
+- <a href="#pie-chart" id="toc-pie-chart">pie chart</a>
 
-```{r}
+``` r
 library(tidyverse)
+```
+
+    Warning: package 'ggplot2' was built under R version 4.3.3
+
+    Warning: package 'lubridate' was built under R version 4.3.2
+
+    ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ✔ dplyr     1.1.3     ✔ readr     2.1.4
+    ✔ forcats   1.0.0     ✔ stringr   1.5.1
+    ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+    ✔ lubridate 1.9.3     ✔ tidyr     1.3.0
+    ✔ purrr     1.0.2     
+    ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ✖ dplyr::filter() masks stats::filter()
+    ✖ dplyr::lag()    masks stats::lag()
+    ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+``` r
 theme_set(theme_bw())
 library(RColorBrewer)
 library(ggbreak) 
 ```
 
-```{r}
+    Warning: package 'ggbreak' was built under R version 4.3.3
+
+    ggbreak v0.1.2
+
+    If you use ggbreak in published research, please cite the following
+    paper:
+
+    S Xu, M Chen, T Feng, L Zhan, L Zhou, G Yu. Use ggbreak to effectively
+    utilize plotting space to deal with large datasets and outliers.
+    Frontiers in Genetics. 2021, 12:774846. doi: 10.3389/fgene.2021.774846
+
+``` r
 # import data
 alignstats <- read.delim("~/Research/spike_commentary/public_data_submit.txt")
 # set replicate as factor not numeric
@@ -27,12 +61,13 @@ alignstats$Rep <- as.factor(alignstats$Rep)
 
 # spike-in/target ratios in all inputs
 
-```{r}
+``` r
 alignstats$tagdir.spike_target <- as.numeric(alignstats$tagdir.spike_target)
 ```
 
 ## Function to calculate variation in inputs within each paper
-```{r}
+
+``` r
 # function to apply to each author: 
 get_input_variation <- function(df, .df) {
    dfnew <- df                                # copy input dataframe
@@ -45,14 +80,15 @@ get_input_variation <- function(df, .df) {
 
 Test on small df:
 
-```{r}
+``` r
 # get_input_variation(alignstats_Ma_input)
 
 # get_input_mean(alignstats)
 ```
+
 ## Apply function to each dataset within dataframe
 
-```{r}
+``` r
 # grouping df 
 input_var_stats <- alignstats %>% 
   filter(Mark == "input") %>%      # only inputs
@@ -62,7 +98,7 @@ input_var_stats <- alignstats %>%
   bind_rows()
 ```
 
-```{r}
+``` r
 get_input_mean <- function(df, .df) {
    dfnew <- df                                # copy input dataframe
    df$var <- as.numeric(df$var)
@@ -72,7 +108,7 @@ get_input_mean <- function(df, .df) {
 }
 ```
 
-```{r}
+``` r
 input_var_stats <- input_var_stats %>%
   group_by(Author) %>%
  group_map(get_input_mean, .keep = TRUE) %>%
@@ -81,8 +117,9 @@ input_var_stats <- input_var_stats %>%
 
 ## plot input spike-in/target relative variation
 
-Select authors with multiple inputs, reorder: 
-```{r}
+Select authors with multiple inputs, reorder:
+
+``` r
 # select for datasets with > 1 input
 input_var_stats_mult <- input_var_stats %>%
   filter(!Author %in% c("Bonhoure", "Zhang"))
@@ -91,7 +128,7 @@ input_var_stats_mult <- input_var_stats %>%
 input_var_stats_mult$ID <- factor(input_var_stats_mult$ID, levels = c("Data1", "Data2", "Data3", "Data4", "Data5", "Data6", "Data7", "Data8", "Data9", "Data10", "Data11", "Data12", "Data13-23"))
 ```
 
-```{r}
+``` r
 num <- input_var_stats_mult %>% 
     group_by(Author) %>% 
     mutate(group_id = cur_group_id())
@@ -100,7 +137,7 @@ num <- input_var_stats_mult %>%
 num$group_id <- as.factor(num$group_id)
 ```
 
-```{r, fig.width = 5.5, fig.height = 4}
+``` r
 input_var_stats_mult %>% 
   drop_na(var) %>% drop_na(ID) %>% 
   ggplot() + 
@@ -111,9 +148,11 @@ input_var_stats_mult %>%
   labs(title = "Variation in input spike-in/target chromatin ratios", y = "Relative ratio of inputs within a dataset")
 ```
 
+![](spike_correspondence_figure3_files/figure-commonmark/unnamed-chunk-11-1.png)
+
 Plot with proper aesthetics
 
-```{r, fig.width = 7.5, fig.height = 5}
+``` r
 input_var <- input_var_stats_mult %>% 
   drop_na(var) %>% ggplot() + 
   aes(x = ID) + 
@@ -128,20 +167,24 @@ input_var <- input_var_stats_mult %>%
   geom_col(aes(x = ID, y = 14), alpha = 0.2, width = 0.8) 
 
 input_var
+```
 
+![](spike_correspondence_figure3_files/figure-commonmark/unnamed-chunk-12-1.png)
+
+``` r
 # save plot
 # ggsave(file="input_var_fin_bars.pdf", plot=input_var, width=7.5, height=5)
 ```
 
 # Revisions plot
 
-```{r}
+``` r
 public_data_submit_revisions <- read.delim("~/Research/spike_commentary/public_data_submit_revisions.tsv")
 
 public_data_submit_revisions$filtered.spike_target <- as.numeric(public_data_submit_revisions$filtered.spike_target)
 ```
 
-```{r}
+``` r
 # function to apply to each author: 
 get_input_variation <- function(df, .df) {
    dfnew <- df                                # copy input dataframe
@@ -152,7 +195,7 @@ get_input_variation <- function(df, .df) {
 }
 ```
 
-```{r}
+``` r
 # grouping df 
 input_var_stats <- public_data_submit_revisions %>% 
   filter(Mark == "input") %>%      # only inputs
@@ -160,15 +203,19 @@ input_var_stats <- public_data_submit_revisions %>%
   group_map(get_input_variation, .keep = TRUE) %>% 
   bind_rows()
 ```
-Remove any papers with only 1 input, since we are plotting variation between inputs within a dataset:
-```{r}
+
+Remove any papers with only 1 input, since we are plotting variation
+between inputs within a dataset:
+
+``` r
 input_var_stats_mult <- input_var_stats %>%
   group_by(Author) %>%
   filter(n()>1)
 ```
 
 Get mean of variation
-```{r}
+
+``` r
 get_input_mean <- function(df, .df) {
    dfnew <- df                                # copy input dataframe
    df$var <- as.numeric(df$var)
@@ -178,35 +225,41 @@ get_input_mean <- function(df, .df) {
 }
 ```
 
-```{r}
+``` r
 input_var_stats_mult <- input_var_stats_mult %>%
   group_by(Author) %>%
  group_map(get_input_mean, .keep = TRUE) %>%
   bind_rows()
 ```
 
-I used to use `cur_group_id` by itself to get a unique group identifier, but this ranks the groups in alphabetical order. Instead, we want to rank by increasing input variation (meanvar), then order from 1-X.
+I used to use `cur_group_id` by itself to get a unique group identifier,
+but this ranks the groups in alphabetical order. Instead, we want to
+rank by increasing input variation (meanvar), then order from 1-X.
 
-First need to `arrange` by increasing meanvar, then `group_by` Author (set as factor with levels in order of groups after arrange function), then set group id to `cur_group_id`
+First need to `arrange` by increasing meanvar, then `group_by` Author
+(set as factor with levels in order of groups after arrange function),
+then set group id to `cur_group_id`
 
-```{r}
+``` r
 input_var_stats_mult <- input_var_stats_mult %>%
   arrange(meanvar) %>%
   group_by(Author = factor(Author, levels = unique(Author))) %>%
   mutate(grp.id = cur_group_id())
 ```
 
-Optional: add Data prefix, to result in each dataset having unique group_id of "Data1", "Data2", etc. I got rid of this in this version as the graph is getting crowded.
-```{r}
+Optional: add Data prefix, to result in each dataset having unique
+group_id of “Data1”, “Data2”, etc. I got rid of this in this version as
+the graph is getting crowded.
+
+``` r
 # input_var_stats_mult$grp.id = paste0('Data', input_var_stats_mult$grp.id)
 ```
 
-```{r}
+``` r
 # input_var_stats_mult$grp.id <- factor(input_var_stats_mult$grp.id, levels = c("Data1", "Data2", "Data3", "Data4", "Data5", "Data6", "Data7", "Data8", "Data9", "Data10", "Data11", "Data12", "Data13", "Data14", "Data15", "Data16", "Data17", "Data18", "Data19", "Data20", "Data21", "Data22", "Data23", "Data24", "Data25", "Data26"))
 ```
 
-
-```{r, fig.width = 5.5, fig.height = 4}
+``` r
 input_var_stats_mult %>% 
   drop_na(var) %>% drop_na(grp.id) %>% 
   ggplot() + 
@@ -218,11 +271,13 @@ input_var_stats_mult %>%
   theme(legend.position = "none")
 ```
 
-Nicer graph with publishing aesthetics: 
+![](spike_correspondence_figure3_files/figure-commonmark/unnamed-chunk-22-1.png)
+
+Nicer graph with publishing aesthetics:
 
 Plotting on log scale to show extent of variation:
 
-```{r, fig.width = 6.5, fig.height = 4.5}
+``` r
 input_var_revision <- input_var_stats_mult %>% 
   drop_na(var) %>% ggplot() + 
   aes(x = as.factor(grp.id)) + 
@@ -238,27 +293,47 @@ input_var_revision <- input_var_stats_mult %>%
 
 input_var_revision
 ```
-```{r}
+
+![](spike_correspondence_figure3_files/figure-commonmark/unnamed-chunk-23-1.png)
+
+``` r
 ggsave("input_var_revision.svg", input_var_revision, width = 6.5, height = 4.5)
 
 ggsave("input_var_revision.pdf", input_var_revision, width = 6.5, height = 4.5)
 ```
 
 Median:
-```{r}
+
+``` r
 median(input_var_stats_mult$meanvar)
 ```
 
+    [1] 1.418471
 
 # pie chart
 
-```{r}
+``` r
 input_presence <- data.frame(input_status = c("sufficient inputs", "some inputs missing", "no inputs present"), paper_count = c(27, 12, 14))
 ```
 
-```{r, fig.width= 5, fig.height = 4}
+``` r
 library(scales)
+```
 
+    Warning: package 'scales' was built under R version 4.3.3
+
+
+    Attaching package: 'scales'
+
+    The following object is masked from 'package:purrr':
+
+        discard
+
+    The following object is masked from 'package:readr':
+
+        col_factor
+
+``` r
 input_piechart <- ggplot(input_presence, aes(x="", y= paper_count, fill=input_status)) +
   geom_bar(stat="identity", width=1, alpha = 0.9) +
   coord_polar("y", start=0) +
@@ -271,8 +346,9 @@ input_piechart <- ggplot(input_presence, aes(x="", y= paper_count, fill=input_st
 
 input_piechart
 ```
-```{r}
+
+![](spike_correspondence_figure3_files/figure-commonmark/unnamed-chunk-27-1.png)
+
+``` r
 ggsave("input_piechart.svg", input_piechart, height = 4, width =5)
 ```
-
-
