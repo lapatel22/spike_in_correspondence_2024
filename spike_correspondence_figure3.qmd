@@ -3,12 +3,6 @@ title: "spike_correspondence_figure3"
 format: gfm
 toc: true
 theme: cosmo
-
-knit: (function(input_file, encoding) {
-    out_dir <- 'docs';
-    rmarkdown::render(input_file,
-      encoding=encoding,
-      output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 ```{r}
@@ -117,7 +111,6 @@ input_var_revision <- input_var_stats_mult %>%
   aes(x = as.factor(grp.id)) + 
   geom_jitter(aes(y = log2(var)), size = 3.5, alpha = 0.6, width = 0.17, pch=21, fill = "dodgerblue2", stroke = NA) + 
   geom_hline(yintercept = 0) + 
-  # scale_y_break(c(5, 8.5), ticklabels=c(9, 10, 11, 12, 13)) + 
   coord_cartesian(ylim = c(0, 3.9))+
   labs(y = "Log2 Relative spike-in/target ratio for ChIP inputs", 
        x = "Dataset") + 
@@ -127,10 +120,12 @@ input_var_revision <- input_var_stats_mult %>%
 
 input_var_revision
 ```
-```{r}
-ggsave("input_var_revision.svg", input_var_revision, width = 6.5, height = 4.5)
 
-ggsave("input_var_revision.pdf", input_var_revision, width = 6.5, height = 4.5)
+Saving plots:
+```{r}
+#ggsave("input_var_revision.svg", input_var_revision, width = 6.5, height = 4.5)
+
+#ggsave("input_var_revision.pdf", input_var_revision, width = 6.5, height = 4.5)
 ```
 
 Median:
@@ -160,8 +155,9 @@ input_piechart <- ggplot(input_presence, aes(x="", y= paper_count, fill=input_st
 
 input_piechart
 ```
+
 ```{r}
-ggsave("input_piechart.svg", input_piechart, height = 4, width =5)
+#ggsave("input_piechart.svg", input_piechart, height = 4, width =5)
 ```
 
 
