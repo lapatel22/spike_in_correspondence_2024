@@ -15,52 +15,12 @@ knit: (function(input_file, encoding) {
 library(tidyverse)
 theme_set(theme_bw())
 library(RColorBrewer)
-library(ggbreak) 
-```
-
-```{r}
-# import data
-alignstats <- read.delim("~/Research/spike_commentary/public_data_submit.txt")
-# set replicate as factor not numeric
-alignstats$Rep <- as.factor(alignstats$Rep)
 ```
 
 # spike-in/target ratios in all inputs
 
-```{r}
-alignstats$tagdir.spike_target <- as.numeric(alignstats$tagdir.spike_target)
-```
 
-## Function to calculate variation in inputs within each paper
-```{r}
-# function to apply to each author: 
-get_input_variation <- function(df, .df) {
-   dfnew <- df                                # copy input dataframe
-   mininput <- min(df$tagdir.spike_target, na.rm = T) # get min from spike_targ
-   var <- as.numeric((df$tagdir.spike_target)/mininput) # make var column
-   dfnew %>%
-     mutate(var = var)                          # add to df
-}
-```
-
-Test on small df:
-
-```{r}
-# get_input_variation(alignstats_Ma_input)
-
-# get_input_mean(alignstats)
-```
 ## Apply function to each dataset within dataframe
-
-```{r}
-# grouping df 
-input_var_stats <- alignstats %>% 
-  filter(Mark == "input") %>%      # only inputs
-  select(2,3:9, 15,17) %>%           # remove extraneous data
-  group_by(Author) %>%             # need to group by paper
-  group_map(get_input_variation, .keep = TRUE) %>% 
-  bind_rows()
-```
 
 ```{r}
 get_input_mean <- function(df, .df) {
@@ -70,67 +30,6 @@ get_input_mean <- function(df, .df) {
    dfnew %>%
      mutate(mean = mean)                          # add to df
 }
-```
-
-```{r}
-input_var_stats <- input_var_stats %>%
-  group_by(Author) %>%
- group_map(get_input_mean, .keep = TRUE) %>%
-  bind_rows()
-```
-
-## plot input spike-in/target relative variation
-
-Select authors with multiple inputs, reorder: 
-```{r}
-# select for datasets with > 1 input
-input_var_stats_mult <- input_var_stats %>%
-  filter(!Author %in% c("Bonhoure", "Zhang"))
-
-# reorder, assign anonymous ID to datasets
-input_var_stats_mult$ID <- factor(input_var_stats_mult$ID, levels = c("Data1", "Data2", "Data3", "Data4", "Data5", "Data6", "Data7", "Data8", "Data9", "Data10", "Data11", "Data12", "Data13-23"))
-```
-
-```{r}
-num <- input_var_stats_mult %>% 
-    group_by(Author) %>% 
-    mutate(group_id = cur_group_id())
-  #  group_indices(., Author)
-
-num$group_id <- as.factor(num$group_id)
-```
-
-```{r, fig.width = 5.5, fig.height = 4}
-input_var_stats_mult %>% 
-  drop_na(var) %>% drop_na(ID) %>% 
-  ggplot() + 
-  aes(x = ID, y =var, color = ID) + 
-  geom_jitter(size = 4, alpha = 0.7, width = 0.2) + 
-  geom_hline(yintercept = 1) + 
-  coord_cartesian(ylim = c(0, 13)) + 
-  labs(title = "Variation in input spike-in/target chromatin ratios", y = "Relative ratio of inputs within a dataset")
-```
-
-Plot with proper aesthetics
-
-```{r, fig.width = 7.5, fig.height = 5}
-input_var <- input_var_stats_mult %>% 
-  drop_na(var) %>% ggplot() + 
-  aes(x = ID) + 
-  geom_jitter(aes(y = var), size = 3.5, alpha = 0.6, width = 0.17, color = "navy", pch=21, fill = "dodgerblue2", stroke = 1.5) + 
-  geom_hline(yintercept = 1) + 
-  coord_cartesian(ylim = c(0.5, 12.8)) + 
-  # scale_y_break(c(5, 8.5), ticklabels=c(9, 10, 11, 12, 13)) + 
-  labs(y = "Relative spike-in/target ratio for ChIP inputs", 
-       x = "Dataset") + 
-  theme_classic() + 
-  scale_y_continuous(breaks=seq(0,13,2)) +
-  geom_col(aes(x = ID, y = 14), alpha = 0.2, width = 0.8) 
-
-input_var
-
-# save plot
-# ggsave(file="input_var_fin_bars.pdf", plot=input_var, width=7.5, height=5)
 ```
 
 # Revisions plot
@@ -195,16 +94,6 @@ input_var_stats_mult <- input_var_stats_mult %>%
   group_by(Author = factor(Author, levels = unique(Author))) %>%
   mutate(grp.id = cur_group_id())
 ```
-
-Optional: add Data prefix, to result in each dataset having unique group_id of "Data1", "Data2", etc. I got rid of this in this version as the graph is getting crowded.
-```{r}
-# input_var_stats_mult$grp.id = paste0('Data', input_var_stats_mult$grp.id)
-```
-
-```{r}
-# input_var_stats_mult$grp.id <- factor(input_var_stats_mult$grp.id, levels = c("Data1", "Data2", "Data3", "Data4", "Data5", "Data6", "Data7", "Data8", "Data9", "Data10", "Data11", "Data12", "Data13", "Data14", "Data15", "Data16", "Data17", "Data18", "Data19", "Data20", "Data21", "Data22", "Data23", "Data24", "Data25", "Data26"))
-```
-
 
 ```{r, fig.width = 5.5, fig.height = 4}
 input_var_stats_mult %>% 
