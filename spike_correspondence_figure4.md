@@ -172,7 +172,7 @@ ggplot(counts_megapeaks_hg38_LH56_sep) +
     Warning: Removed 401 rows containing non-finite outside the scale range
     (`stat_summary()`).
 
-![](spike_correspondence_figure4_files/figure-commonmark/unnamed-chunk-8-1.png)
+![](spike_correspondence_figure4_files/figure-commonmark/Fig_4a_violinplot-1.png)
 
 ``` r
 ## get rid of outliers, just plot middle quantiles
@@ -319,7 +319,7 @@ ggplot(megapeak_ip_norm_sep) +
     Warning: Removed 401 rows containing non-finite outside the scale range
     (`stat_summary()`).
 
-![](spike_correspondence_figure4_files/figure-commonmark/unnamed-chunk-14-1.png)
+![](spike_correspondence_figure4_files/figure-commonmark/Fig_4b_violinplot-1.png)
 
 ``` r
 ## get rid of outliers, just plot middle quantiles
@@ -417,8 +417,4 @@ ggplot(megapeak_ip_input_norm_sep) +
     Warning: Removed 401 rows containing non-finite outside the scale range
     (`stat_summary()`).
 
-![](spike_correspondence_figure4_files/figure-commonmark/unnamed-chunk-18-1.png)
-
-``` r
-## get rid of outliers, just plot middle quantiles
-```
+![](spike_correspondence_figure4_files/figure-commonmark/Fig_4c_violinplot-1.png)

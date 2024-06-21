@@ -76,7 +76,7 @@ counts_megapeaks_hg38_LH56_sep <- counts_megapeaks_hg38_LH56_tidy[grep("Tag", co
 ```
 
 ### read normalized peak signal
-```{r, fig.height = 4, fig.width = 5}
+```{r Fig_4a_violinplot, fig.height = 4, fig.width = 5}
 ggplot(counts_megapeaks_hg38_LH56_sep) + 
  aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
   geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
@@ -158,7 +158,7 @@ megapeak_ip_norm_sep <- megapeak_ip_norm_tidy[grep("Tag", megapeak_ip_norm_tidy$
 
 ### spike-in ip normalized (Figure 4b)
 
-```{r, fig.height = 4, fig.width = 5}
+```{r Fig_4b_violinplot, fig.height = 4, fig.width = 5}
 ggplot(megapeak_ip_norm_sep) + 
  aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
   geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
@@ -227,7 +227,7 @@ megapeak_ip_input_norm_sep <- megapeak_ip_input_norm_tidy[grep("Tag", megapeak_i
 
 ### spike-in ip and input normalized (Figure 4c)
 
-```{r, fig.height = 4, fig.width = 5}
+```{r Fig_4c_violinplot, fig.height = 4, fig.width = 5}
 ggplot(megapeak_ip_input_norm_sep) + 
  aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
   geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
@@ -242,5 +242,4 @@ ggplot(megapeak_ip_input_norm_sep) +
   labs(title = "Distribution of H3K9ac Signal at all Peaks", 
        subtitle = "spike-in IP and input normalized", 
        x = "Spike-in Ratio", y = "Peak Signal") 
-## get rid of outliers, just plot middle quantiles
 ```
