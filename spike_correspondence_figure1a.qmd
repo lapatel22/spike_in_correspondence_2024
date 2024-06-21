@@ -171,7 +171,10 @@ library(DescTools) ## need for calculating AUC
 ### import sequencing statistics file
 
 ```{r, eval = FALSE}
-chiprx_stats <- read_excel("my_chiprx_stats.xlsx")
+public_data_submit_revisions <- read_delim("~/Research/spike_commentary/public_data_submit_revisions.tsv")
+
+chiprx_sequencingstats <- public_data_submit_revisions %>%
+  filter(Author == "Orlando")
 ```
 
 ```{r, eval = FALSE}

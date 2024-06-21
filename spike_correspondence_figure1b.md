@@ -40,6 +40,23 @@ spike_correspondence_figure1b
   - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b"
     id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b">Plot Read
     normalized signal vs expected signal: Fig 1b</a>
+- <a href="#normalize-peak-signal"
+  id="toc-normalize-peak-signal">Normalize peak signal</a>
+  - <a href="#average-yeast-and-fly-inputip"
+    id="toc-average-yeast-and-fly-inputip">Average yeast and fly
+    input/IP</a>
+    - <a href="#determine-normalization-factor-from-aligned-reads"
+      id="toc-determine-normalization-factor-from-aligned-reads">Determine
+      normalization factor from aligned reads:</a>
+    - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
+      id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
+      Signal at Peaks: Area under Histogram Curve</a>
+    - <a href="#make-line-of-expected-signal-1"
+      id="toc-make-line-of-expected-signal-1">Make line of expected
+      signal:</a>
+    - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
+      id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
+      Read normalized signal vs expected signal: Fig 1b</a>
 
 ``` r
 library(tidyverse)
@@ -286,7 +303,15 @@ process_my_histograms <- function(x, .x) {
     colnames(x)[1] <- "Distance_from_center"
     x <- x %>% 
     rename_with(~ gsub(".hg38.tagdir", "", .x), contains("tagdir")) %>% 
-    #rename_with(~ gsub(".+\\_Hela_", "Hela_", .x), contains("Hela")) %>%
+    rename_with(~ gsub(".+\\_Hela_", "HelaS3_", .x), contains("Hela")) %>%
+      rename_with(~ gsub("ratio1", "100sync_0inter", .x), contains("ratio1")) %>%
+      rename_with(~ gsub("ratio2", "75sync_25inter", .x), contains("ratio2")) %>%
+      rename_with(~ gsub("ratio3", "50sync_50inter", .x), contains("ratio3")) %>%
+      rename_with(~ gsub("ratio4", "25sync_75inter", .x), contains("ratio4")) %>%
+      rename_with(~ gsub("ratio5", "5sync_95inter", .x), contains("ratio5")) %>%
+      rename_with(~ gsub("ratio6", "0sync_100inter", .x), contains("ratio6")) %>%
+      rename_with(~ gsub("K9ac", "H3K9ac", .x), contains("K9ac")) %>%
+      rename_with(~ gsub("ac_r", "ac_rep", .x), contains("K9ac")) %>%
     rename_with(~ gsub("\\.[[:digit:]]$", "_minus", .x), contains("Tags")) %>% 
     rename_with(~ gsub("\\.\\.\\.", "_", .x), contains("Tags"))
     
@@ -308,22 +333,29 @@ hist_K9ac_allsamples_LP78_tidy <-
 
 ``` r
 hist_K9ac_allsamples_LP78_sepIP <- hist_K9ac_allsamples_LP78_tidy[grep("K9ac", hist_K9ac_allsamples_LP78_tidy$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
-  "X", 
-  id = "78[:lower:]",
-  "\\_",
-  cell = "[:alpha:]+", 
+  cell = ".+", 
   "\\_", 
-  ratio = ".+", 
-  "\\_", 
+  ratio_sync = "[:digit:]+", 
+  "sync", "\\_", 
+  ratio_inter = "[:digit:]+", 
+  "inter", "\\_", 
   antibody = ".+", 
   "\\_", 
   replicate = ".+", 
   ".Coverage"))
 ```
 
+Fix ordering of mitotic and interphase cell ratios:
+
+``` r
+hist_K9ac_allsamples_LP78_sepIP$ratio_sync <- factor(hist_K9ac_allsamples_LP78_sepIP$ratio_sync, levels = c(100, 75, 50, 25, 5, 0))
+
+hist_K9ac_allsamples_LP78_sepIP$ratio_inter <- factor(hist_K9ac_allsamples_LP78_sepIP$ratio_inter, levels = c(0, 25, 50, 75, 95, 100))
+```
+
 ``` r
 ggplot(data = hist_K9ac_allsamples_LP78_sepIP) + 
-  aes(x = Distance_from_center, y = Coverage, group=interaction(ratio, antibody, replicate), color = ratio) + 
+  aes(x = Distance_from_center, y = Coverage, group=interaction(ratio_inter, antibody, replicate), color = ratio_inter) + 
   geom_line(alpha = 0.9, linewidth = 1.1) + 
   labs(title = "Hela H3K9ac megasample peaks", 
        x = "Distance from Peak Center") +
@@ -345,12 +377,15 @@ ggplot(data = hist_K9ac_allsamples_LP78_sepIP) +
     3.5.0.
     ℹ Please use the `legend.position.inside` argument of `theme()` instead.
 
-![](spike_correspondence_figure1b_files/figure-commonmark/unnamed-chunk-22-1.png)
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_readnorm_histplot-1.png)
 
 ### Calculate Signal at Peaks: Area under Histogram Curve
 
 ``` r
-samples <- unique(hist_K9ac_allsamples_LP78_sepIP$id)
+hist_K9ac_allsamples_LP78_tidyIP <- hist_K9ac_allsamples_LP78_tidy %>% filter(grepl("H3K9ac", Sample))
+
+samples <- unique(hist_K9ac_allsamples_LP78_tidyIP$Sample)
+
 colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_center"
 x <- hist_K9ac_allsamples_LP78$Distance_from_center
 AUC_peaks <- matrix(data = "", nrow = length(samples), ncol = 1)
@@ -358,8 +393,8 @@ AUC_peaks <- data.frame(AUC_peaks, row.names = samples)
 
 for (i in 1:length(samples)) {
 
-  y <- hist_K9ac_allsamples_LP78_sepIP %>% 
-    filter(id == samples[i]) %>%
+  y <- hist_K9ac_allsamples_LP78_tidy %>% 
+    filter(Sample == samples[i]) %>%
     select(Coverage)
   y <- pull(y, Coverage)
 
@@ -442,7 +477,7 @@ ggplot() +
   theme(legend.position = "none")
 ```
 
-![](spike_correspondence_figure1b_files/figure-commonmark/unnamed-chunk-29-1.png)
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_readnorm_publish_dotplot-1.png)
 
 Calculated Rsquared
 
@@ -467,3 +502,217 @@ get_Rsquared(AUC_peaks)
 ```
 
     [1] 0.06828471
+
+# Normalize peak signal
+
+``` r
+process_histograms_cov <- function(x, .x) {
+    colnames(x)[1] <- "Distance_from_tss"
+    x <- x %>% 
+    rename_with(~ gsub("hg38.tagdir", "", .x), contains("tagdir")) %>% 
+    rename_with(~ gsub(".+\\_HEK_", "HEK_", .x), contains("HEK")) %>%
+    rename_with(~ gsub("\\.[[:digit:]]$", "_minus", .x), contains("Tags")) %>% 
+    rename_with(~ gsub("\\.\\.\\.", "_", .x), contains("Tags"))
+    
+    xcov <- x %>% select(contains("Coverage"))
+}
+```
+
+``` r
+colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_tss"
+hist_K9ac_allsamples_LP78_cov <- process_histograms_cov(hist_K9ac_allsamples_LP78)
+hist_K9ac_allsamples_LP78_cov$Distance_from_tss <- hist_K9ac_allsamples_LP78$Distance_from_tss
+```
+
+## Average yeast and fly input/IP
+
+### Determine normalization factor from aligned reads:
+
+``` r
+H3K9ac_mitotic_titration_seqtats <- read.delim("~/Research/spike_commentary/mydata_sequencing_statistics_mitotic_titration.txt")
+```
+
+``` r
+H3K9ac_mitotic_titration_seqtatsIP <- H3K9ac_mitotic_titration_seqtats %>%
+  filter(type == "ip")
+```
+
+Normalize to Dual Spike-ins
+
+``` r
+hist_K9ac_allsamples_LP78_tidyIP <- hist_K9ac_allsamples_LP78_tidy %>% 
+  filter(grepl("H3K9ac", Sample))
+
+# copy the hist_tss_hg38_LH58_cov dataframe 
+peakcov_avg_ip_input_norm <- hist_K9ac_allsamples_LP78_tidyIP
+
+sampleID <- unique(hist_K9ac_allsamples_LP78_tidyIP$Sample)
+
+seqstatID <- sub('.Coverage', "", sampleID )
+
+# dataframe 1: hist_K9ac_allsamples_LP78_tidy (original read-normalized data) 
+# dataframe 2: H3K9ac_mitotic_titration_seqtatsIP
+# dataframe 3: peakcov_avg_ip_input_norm (output df)
+
+# When Sample rows of dataframe 1 match Sample.ID in dataframe 2, multiply Coverage column in df1 by factor in df2, assign to df3
+
+for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
+  if (!hist_K9ac_allsamples_LP78_tidyIP[i, 2] %in% paste0(H3K9ac_mitotic_titration_seqtatsIP$Sample.ID, ".Coverage")) {
+    next()
+  }
+  
+  # make get current sampleID, remove .Coverage 
+ seqstatIDi <- sub('.Coverage', "", hist_K9ac_allsamples_LP78_tidyIP[i, 2] )
+ 
+ hist_K9ac_allsamples_LP78_tidyIP[grep(seqstatIDi, hist_K9ac_allsamples_LP78_tidyIP$Sample), ]
+ # get normalization factor from sequencing stats (df3)
+ 
+ normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 16]
+ 
+ # multiply read_norm coverage by norm factor, assign to new df
+peakcov_avg_ip_input_norm[i, 3] <- 
+  hist_K9ac_allsamples_LP78_tidyIP[i, 3]/(normfactori)
+  
+}
+```
+
+``` r
+peakcov_avg_ip_input_norm_sepIP <- peakcov_avg_ip_input_norm[grep("K9ac", peakcov_avg_ip_input_norm$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+  cell = ".+", 
+  "\\_", 
+  ratio_sync = "[:digit:]+", 
+  "sync", "\\_", 
+  ratio_inter = "[:digit:]+", 
+  "inter", "\\_", 
+  antibody = ".+", 
+  "\\_", 
+  replicate = ".+", 
+  ".Coverage"))
+```
+
+Fix ordering of mitotic and interphase cell ratios:
+
+``` r
+peakcov_avg_ip_input_norm_sepIP$ratio_sync <- factor(peakcov_avg_ip_input_norm_sepIP$ratio_sync, levels = c(100, 75, 50, 25, 5, 0))
+
+peakcov_avg_ip_input_norm_sepIP$ratio_inter <- factor(peakcov_avg_ip_input_norm_sepIP$ratio_inter, levels = c(0, 25, 50, 75, 95, 100))
+```
+
+``` r
+ggplot(data = peakcov_avg_ip_input_norm_sepIP) + 
+  aes(x = Distance_from_center, y = Coverage, group=interaction(ratio_inter, antibody, replicate), color = ratio_inter) + 
+  geom_line(alpha = 0.9, linewidth = 1.1) + 
+  labs(title = "Hela H3K9ac megasample peaks",
+       subtitle = "Dual Spike-in Normalized",
+       x = "Distance from Peak Center") +
+  scale_color_manual(
+    values = colorRampPalette(brewer.pal(9, "Blues"))(8)[3:8],
+    name = "Cell Ratio", 
+    labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) + 
+  theme_classic() + 
+  theme(legend.position = c(0.84, 0.76), 
+                          legend.background = element_rect(
+                                  size=0.7, linetype="solid", 
+                                  colour ="grey20")) 
+```
+
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_spikenorm_histplot-1.png)
+
+### Calculate Signal at Peaks: Area under Histogram Curve
+
+``` r
+samples <- unique(peakcov_avg_ip_input_norm$Sample)
+
+colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_center"
+x <- hist_K9ac_allsamples_LP78$Distance_from_center
+
+AUC_peaks <- matrix(data = "", nrow = length(samples), ncol = 1)
+AUC_peaks <- data.frame(AUC_peaks, row.names = samples)
+
+for (i in 1:length(samples)) {
+
+  y <- peakcov_avg_ip_input_norm %>% 
+    filter(Sample == samples[i]) %>%
+    select(Coverage)
+  y <- pull(y, Coverage)
+
+AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
+
+}
+```
+
+Processing Signal at peaks, add expected line
+
+``` r
+AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+
+interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
+AUC_peaks$interphase <- as.numeric(interphase)
+```
+
+Scale points from 0-1
+
+``` r
+avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
+avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
+avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
+avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
+avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
+avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
+```
+
+``` r
+AUC_peaks <- AUC_peaks %>%
+  mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
+```
+
+``` r
+minmaxnorm_avg_0inter <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3], AUC_peaks[3,3]))
+minmaxnorm_avg_25inter <- mean(c(AUC_peaks[4,3], AUC_peaks[5,3], AUC_peaks[6,3]))
+minmaxnorm_avg_50inter <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3], AUC_peaks[9,3]))
+minmaxnorm_avg_75inter <- mean(c(AUC_peaks[10,3], AUC_peaks[11,3], AUC_peaks[12,3]))
+minmaxnorm_avg_95inter <- mean(c(AUC_peaks[13,3], AUC_peaks[14,3], AUC_peaks[15,3]))
+minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18,3]))
+```
+
+### Make line of expected signal:
+
+``` r
+observed_line <- c(minmaxnorm_avg_100inter, 
+                   minmaxnorm_avg_95inter, 
+                   minmaxnorm_avg_75inter,  
+                   minmaxnorm_avg_50inter, 
+                   minmaxnorm_avg_25inter,  
+                   minmaxnorm_avg_0inter)
+
+expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
+
+percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
+
+percent_mit_mean <- rep(c(100, 75, 50, 25, 5, 0))
+AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
+
+observed_vs_expected_LP78 <- data.frame(cbind(
+  percent_inter_mean, percent_mit_mean, 
+  expected_line, observed_line))
+```
+
+### Plot Read normalized signal vs expected signal: Fig 1b
+
+``` r
+ggplot() +
+  geom_point(data = AUC_peaks, 
+             aes(x = as.numeric(mitotic), y = minmaxnorm), 
+             size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
+  scale_color_manual(name = "Cell Ratio", 
+    labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
+  geom_line(data = observed_vs_expected_LP78, 
+            aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
+ labs(title = "Relative H3K9ac Signal", 
+       subtitle = "Read Normalized, scaled 0-1",
+       x = "% Mitotic Cells", 
+       y = "Relative H3K9ac Signal") + 
+  theme(legend.position = "none")
+```
+
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_spikenorm_publish_dotplot-1.png)
