@@ -1,0 +1,246 @@
+---
+title: "spike_correspondence_figure4"
+format: gfm
+toc: true
+theme: cosmo
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_classic())
+library(DescTools)          # used for area under curve estimates
+library(ggpp)             # used for position_nudge_center, other position adjustments
+```
+
+# Data generation: 
+
+Make megasample ChIP tag directory:
+```{bash, eval = FALSE}
+makeTagDirectory 56_combined_H3K9ac_sync.hg38-tagdir -d *yeast*.hg38.all.nosuffx2-tagdir
+
+findPeaks 56_combined_H3K9ac_sync.hg38-tagdir -style histone -size 1000 -minDist 2500 -o 56_combined_H3K9ac_sync.hg38.recommendedregions.txt -i 56_combined_input_sync.hg38-tagdir
+
+annotatePeaks.pl 56_combined_H3K9ac_sync.hg38.recommendedregions.txt hg38 -size 1000 -d *.hg38.all.nosuffx2-tagdir > counts_megapeaks_hg38_LH56.txt
+```
+
+```{r}
+counts_megapeaks_hg38_LH56 <- read_delim("~/Research/LH_56/counts_megapeaks_hg38_LH56.txt")
+```
+
+```{r}
+process_counts_annotpeaks <- function(counts_annotpeaks, .x) {
+  colnames(counts_annotpeaks)[1] <- "PeakID"
+  counts_annotpeaks <- counts_annotpeaks %>% 
+    select(PeakID, contains(c("DMSO", "TSA"))) %>%
+    select(!contains(c("10M", "100M"))) %>% 
+    rename_with(~ gsub("hg38.all.nosuffx2.tagdir.", "", .x), contains("hg38")) %>% 
+    rename_with(~ gsub("^[[:digit:]]+", "", .x), contains("Tag")) %>%
+    rename_with(~ gsub("^[[:alpha:]]", "HelaS3_sync", .x), contains("Tag")) %>%
+    rename_with(~ gsub("sync_0-1k", "0.00025spike_H3K9ac", .x), contains("Tag")) %>%
+    rename_with(~ gsub("sync_1k", "0.0025spike_H3K9ac", .x), contains("Tag")) %>%
+    rename_with(~ gsub("sync_10k", "0.025spike_H3K9ac", .x), contains("Tag")) %>%
+    rename_with(~ gsub("sync_100k", "0.25spike_H3K9ac", .x), contains("Tag")) %>%
+    rename_with(~ gsub("sync_1M", "2.5spike_H3K9ac", .x), contains("Tag")) %>%
+    rename_with(~ gsub("_yeast", "", .x), contains("Tag")) %>%
+    rename_with(~ gsub("\\.[[:digit:]]$", "_minus", .x), contains("Tag")) %>% 
+    rename_with(~ gsub("\\ Count.+", "", .x), contains("Tag")) # remove chrs after Tag
+} 
+```
+
+```{r}
+counts_megapeaks_hg38_LH56_clean <- process_counts_annotpeaks(counts_megapeaks_hg38_LH56)
+
+colnames(counts_megapeaks_hg38_LH56_clean)
+```
+
+```{r}
+counts_megapeaks_hg38_LH56_tidy <- counts_megapeaks_hg38_LH56_clean %>% 
+  select(PeakID, contains("Tag")) %>%
+  pivot_longer(
+      cols = !PeakID, 
+      names_to = "Sample", 
+      values_to = "Peak_Tags")
+```
+
+```{r}
+counts_megapeaks_hg38_LH56_sep <- counts_megapeaks_hg38_LH56_tidy[grep("Tag", counts_megapeaks_hg38_LH56_tidy$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+  cell = ".+",
+  "\\_",
+  mitotic = ".+",
+  "\\_",
+  treatment = "[:alpha:]+", 
+  "\\_", 
+  yeast_ratio = ".+", 
+  "spike", "\\_", 
+  antibody = "H3K9ac", ".Tag"))
+```
+
+### read normalized peak signal
+```{r, fig.height = 4, fig.width = 5}
+ggplot(counts_megapeaks_hg38_LH56_sep) + 
+ aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
+  geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
+  stat_summary(fun = "mean", geom = "point", size = 5, alpha = 0.9, position = position_nudge_center(c(-0.2, 0.2))) + 
+  scale_fill_manual(
+    values = c("forestgreen", "darkorchid"),
+    name = "Treatment") + 
+  scale_color_manual(
+    values = c("forestgreen", "darkorchid3"),
+    name = "Treatment") + 
+  scale_y_log10() + theme_bw() +
+  labs(title = "Distribution of H3K9ac Signal at all Peaks", 
+       subtitle = "read-depth normalized", 
+       x = "Spike-in Ratio", y = "Peak Signal") 
+## get rid of outliers, just plot middle quantiles
+```
+
+## normalize to spike-in IP only
+
+```{r}
+mydata_sequencing_statistics_spikeintitration <- read.delim("~/Research/spike_commentary/mydata_sequencing_statistics_spikeintitration.txt")
+```
+
+```{r}
+knitr::kable(mydata_sequencing_statistics_spikeintitration)
+```
+
+```{r}
+
+mydata_sequencing_statistics_spikeintitration_IPs <- 
+  mydata_sequencing_statistics_spikeintitration %>%
+  filter(grepl("H3K9ac", Sample.ID))
+  
+megapeak_ip_norm <- counts_megapeaks_hg38_LH56_clean
+colnames(megapeak_ip_norm)
+
+for (i in 1:ncol(megapeak_ip_norm)) {
+  if (!colnames(megapeak_ip_norm)[i] %in% paste0((mydata_sequencing_statistics_spikeintitration_IPs$Sample.ID), ".Tag")) {
+    next()
+  }
+  
+  # make get current sampleID, remove .Coverage 
+ seqstatIDi <- sub('.Tag', "", colnames(megapeak_ip_norm[i]))
+ 
+
+ # get normalization factor from sequencing stats (df3)
+ 
+ normfactori <- mydata_sequencing_statistics_spikeintitration_IPs[grep(seqstatIDi, mydata_sequencing_statistics_spikeintitration_IPs$Sample.ID), 8]
+ 
+ # multiply read_norm coverage by norm factor, assign to new df
+megapeak_ip_norm[, i] <- 
+  counts_megapeaks_hg38_LH56_clean[, i]/(normfactori)
+  
+}
+```
+
+Make individual sample count dataframe in tidy format: 
+```{r}
+megapeak_ip_norm_tidy <- megapeak_ip_norm %>% 
+  select(PeakID, contains("Tag")) %>%
+  pivot_longer(
+      cols = !PeakID, 
+      names_to = "Sample", 
+      values_to = "Peak_Tags")
+```
+
+```{r}
+megapeak_ip_norm_sep <- megapeak_ip_norm_tidy[grep("Tag", megapeak_ip_norm_tidy$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+  cell = ".+",
+  "\\_",
+  mitotic = ".+",
+  "\\_",
+  treatment = "[:alpha:]+", 
+  "\\_", 
+  yeast_ratio = ".+", 
+  "spike", "\\_", 
+  antibody = "H3K9ac", ".Tag"))
+```
+
+### spike-in ip normalized (Figure 4b)
+
+```{r, fig.height = 4, fig.width = 5}
+ggplot(megapeak_ip_norm_sep) + 
+ aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
+  geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
+  stat_summary(fun = "mean", geom = "point", size = 5, alpha = 0.9, position = position_nudge_center(c(-0.2, 0.2))) + 
+  scale_fill_manual(
+    values = c("forestgreen", "darkorchid"),
+    name = "Treatment") + 
+  scale_color_manual(
+    values = c("forestgreen", "darkorchid3"),
+    name = "Treatment") + 
+  scale_y_log10() + theme_bw() +
+  labs(title = "Distribution of H3K9ac Signal at all Peaks", 
+       subtitle = "spike-in IP normalized", 
+       x = "Spike-in Ratio", y = "Peak Signal") 
+## get rid of outliers, just plot middle quantiles
+```
+
+## normalize to spike-in IP and inputs
+
+```{r}
+megapeak_ip_input_norm <- counts_megapeaks_hg38_LH56_clean
+colnames(megapeak_ip_input_norm)
+
+for (i in 1:ncol(megapeak_ip_input_norm)) {
+  if (!colnames(megapeak_ip_input_norm)[i] %in% paste0((mydata_sequencing_statistics_spikeintitration$Sample.ID), ".Tag")) {
+    next()
+  }
+  
+  # make get current sampleID, remove .Coverage 
+ seqstatIDi <- sub('.Tag', "", colnames(megapeak_ip_input_norm[i]))
+ 
+
+ # get normalization factor from sequencing stats (df3)
+ 
+ normfactori <- mydata_sequencing_statistics_spikeintitration[grep(seqstatIDi, mydata_sequencing_statistics_spikeintitration$Sample.ID), 11]
+ 
+ # multiply read_norm coverage by norm factor, assign to new df
+megapeak_ip_input_norm[, i] <- 
+  counts_megapeaks_hg38_LH56_clean[, i]/(normfactori)
+  
+}
+```
+
+Make individual sample count dataframe in tidy format: 
+```{r}
+megapeak_ip_input_norm_tidy <- megapeak_ip_input_norm %>% 
+  select(PeakID, contains("Tag")) %>%
+  pivot_longer(
+      cols = !PeakID, 
+      names_to = "Sample", 
+      values_to = "Peak_Tags")
+```
+
+```{r}
+megapeak_ip_input_norm_sep <- megapeak_ip_input_norm_tidy[grep("Tag", megapeak_ip_input_norm_tidy$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+  cell = ".+",
+  "\\_",
+  mitotic = ".+",
+  "\\_",
+  treatment = "[:alpha:]+", 
+  "\\_", 
+  yeast_ratio = ".+", 
+  "spike", "\\_", 
+  antibody = "H3K9ac", ".Tag"))
+```
+
+### spike-in ip and input normalized (Figure 4c)
+
+```{r, fig.height = 4, fig.width = 5}
+ggplot(megapeak_ip_input_norm_sep) + 
+ aes(x = yeast_ratio, y = Peak_Tags, group = interaction(treatment, yeast_ratio), fill = treatment, color = treatment) + 
+  geom_violin(alpha = 0.1, width = 0.8, linewidth = 1.1) + 
+  stat_summary(fun = "mean", geom = "point", size = 5, alpha = 0.9, position = position_nudge_center(c(-0.2, 0.2))) + 
+  scale_fill_manual(
+    values = c("forestgreen", "darkorchid"),
+    name = "Treatment") + 
+  scale_color_manual(
+    values = c("forestgreen", "darkorchid3"),
+    name = "Treatment") + 
+  scale_y_log10() + theme_bw() +
+  labs(title = "Distribution of H3K9ac Signal at all Peaks", 
+       subtitle = "spike-in IP and input normalized", 
+       x = "Spike-in Ratio", y = "Peak Signal") 
+## get rid of outliers, just plot middle quantiles
+```
