@@ -396,28 +396,7 @@ get_Rsquared <- function(AUC_peaks) {
 get_Rsquared(AUC_peaks)
 ```
 
-# Normalize peak signal
-
-```{r}
-process_histograms_cov <- function(x, .x) {
-    colnames(x)[1] <- "Distance_from_tss"
-    x <- x %>% 
-    rename_with(~ gsub("hg38.tagdir", "", .x), contains("tagdir")) %>% 
-    rename_with(~ gsub(".+\\_HEK_", "HEK_", .x), contains("HEK")) %>%
-    rename_with(~ gsub("\\.[[:digit:]]$", "_minus", .x), contains("Tags")) %>% 
-    rename_with(~ gsub("\\.\\.\\.", "_", .x), contains("Tags"))
-    
-    xcov <- x %>% select(contains("Coverage"))
-}
-```
-
-```{r}
-colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_tss"
-hist_K9ac_allsamples_LP78_cov <- process_histograms_cov(hist_K9ac_allsamples_LP78)
-hist_K9ac_allsamples_LP78_cov$Distance_from_tss <- hist_K9ac_allsamples_LP78$Distance_from_tss
-```
-
-## Average yeast and fly input/IP
+# Normalize peak signal to Dual Spike-ins
 
 ### Determine normalization factor from aligned reads:
 
@@ -429,6 +408,11 @@ H3K9ac_mitotic_titration_seqtats <- read.delim("~/Research/spike_commentary/myda
 H3K9ac_mitotic_titration_seqtatsIP <- H3K9ac_mitotic_titration_seqtats %>%
   filter(type == "ip")
 ```
+
+```{r}
+knitr::kable(H3K9ac_mitotic_titration_seqtatsIP)
+```
+
 
 Normalize to Dual Spike-ins
 
@@ -605,4 +589,9 @@ ggplot() +
        y = "Relative H3K9ac Signal") + 
   theme(legend.position = "none")
 ```
+ 
+Rsquared value: 
 
+```{r}
+get_Rsquared(AUC_peaks)
+```

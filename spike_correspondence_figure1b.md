@@ -40,23 +40,21 @@ spike_correspondence_figure1b
   - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b"
     id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b">Plot Read
     normalized signal vs expected signal: Fig 1b</a>
-- <a href="#normalize-peak-signal"
-  id="toc-normalize-peak-signal">Normalize peak signal</a>
-  - <a href="#average-yeast-and-fly-inputip"
-    id="toc-average-yeast-and-fly-inputip">Average yeast and fly
-    input/IP</a>
-    - <a href="#determine-normalization-factor-from-aligned-reads"
-      id="toc-determine-normalization-factor-from-aligned-reads">Determine
-      normalization factor from aligned reads:</a>
-    - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
-      id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
-      Signal at Peaks: Area under Histogram Curve</a>
-    - <a href="#make-line-of-expected-signal-1"
-      id="toc-make-line-of-expected-signal-1">Make line of expected
-      signal:</a>
-    - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
-      id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
-      Read normalized signal vs expected signal: Fig 1b</a>
+- <a href="#normalize-peak-signal-to-dual-spike-ins"
+  id="toc-normalize-peak-signal-to-dual-spike-ins">Normalize peak signal
+  to Dual Spike-ins</a>
+  - <a href="#determine-normalization-factor-from-aligned-reads"
+    id="toc-determine-normalization-factor-from-aligned-reads">Determine
+    normalization factor from aligned reads:</a>
+  - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
+    id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
+    Signal at Peaks: Area under Histogram Curve</a>
+  - <a href="#make-line-of-expected-signal-1"
+    id="toc-make-line-of-expected-signal-1">Make line of expected
+    signal:</a>
+  - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
+    id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
+    Read normalized signal vs expected signal: Fig 1b</a>
 
 ``` r
 library(tidyverse)
@@ -503,28 +501,7 @@ get_Rsquared(AUC_peaks)
 
     [1] 0.06828471
 
-# Normalize peak signal
-
-``` r
-process_histograms_cov <- function(x, .x) {
-    colnames(x)[1] <- "Distance_from_tss"
-    x <- x %>% 
-    rename_with(~ gsub("hg38.tagdir", "", .x), contains("tagdir")) %>% 
-    rename_with(~ gsub(".+\\_HEK_", "HEK_", .x), contains("HEK")) %>%
-    rename_with(~ gsub("\\.[[:digit:]]$", "_minus", .x), contains("Tags")) %>% 
-    rename_with(~ gsub("\\.\\.\\.", "_", .x), contains("Tags"))
-    
-    xcov <- x %>% select(contains("Coverage"))
-}
-```
-
-``` r
-colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_tss"
-hist_K9ac_allsamples_LP78_cov <- process_histograms_cov(hist_K9ac_allsamples_LP78)
-hist_K9ac_allsamples_LP78_cov$Distance_from_tss <- hist_K9ac_allsamples_LP78$Distance_from_tss
-```
-
-## Average yeast and fly input/IP
+# Normalize peak signal to Dual Spike-ins
 
 ### Determine normalization factor from aligned reads:
 
@@ -536,6 +513,31 @@ H3K9ac_mitotic_titration_seqtats <- read.delim("~/Research/spike_commentary/myda
 H3K9ac_mitotic_titration_seqtatsIP <- H3K9ac_mitotic_titration_seqtats %>%
   filter(type == "ip")
 ```
+
+``` r
+knitr::kable(H3K9ac_mitotic_titration_seqtatsIP)
+```
+
+| Sample.ID                         | type | X..mitotic.cells | X..interphase.cells |    reads | dm6.aligned | sac3.aligned | hg38.aligned | dm6.sac3 | dm6.hg38 | sac3.hg38 | hg38.peaks | hg38.FRIP | fly.ip.input.norm | yeast.ip.input.norm | dual.ip.input.norm | X   |
+|:----------------------------------|:-----|-----------------:|--------------------:|---------:|------------:|-------------:|-------------:|---------:|---------:|----------:|-----------:|----------:|------------------:|--------------------:|-------------------:|:----|
+| HelaS3_100sync_0inter_H3K9ac_rep1 | ip   |              100 |                   0 | 19163813 |     1062178 |      5045695 |     11688694 |   0.2105 |  0.09087 |   0.43167 |      26415 |     21.30 |            7.8269 |             55.2714 |            55.0298 | NA  |
+| HelaS3_100sync_0inter_H3K9ac_rep2 | ip   |              100 |                   0 | 17838260 |      958103 |      4624313 |     10951006 |   0.2072 |  0.08749 |   0.42227 |      24495 |     20.82 |            7.5357 |             54.0679 |            53.4090 | NA  |
+| HelaS3_100sync_0inter_H3K9ac_rep3 | ip   |              100 |                   0 | 17185695 |     1085502 |      5355943 |      9706357 |   0.2027 |  0.11183 |   0.55180 |      29846 |     28.75 |            9.6322 |             70.6530 |            69.0393 | NA  |
+| HelaS3_75sync_25inter_H3K9ac_rep1 | ip   |               75 |                  25 | 17095802 |      637243 |      3312364 |     12182780 |   0.1924 |  0.05231 |   0.27189 |      26658 |     24.47 |            4.7339 |             35.6811 |            34.4093 | NA  |
+| HelaS3_75sync_25inter_H3K9ac_rep2 | ip   |               75 |                  25 | 20167562 |      670064 |      3201780 |     15143202 |   0.2093 |  0.04425 |   0.21143 |      23593 |     20.24 |            4.0045 |             27.7467 |            27.8892 | NA  |
+| HelaS3_75sync_25inter_H3K9ac_rep3 | ip   |               75 |                  25 | 15777520 |      587962 |      3102874 |     11242290 |   0.1895 |  0.05230 |   0.27600 |      27700 |     25.97 |            4.7330 |             36.2205 |            34.6758 | NA  |
+| HelaS3_50sync_50inter_H3K9ac_rep1 | ip   |               50 |                  50 | 20417995 |      564595 |      3329126 |     15334517 |   0.1696 |  0.03682 |   0.21710 |      27960 |     26.82 |            3.3112 |             29.4973 |            26.3377 | NA  |
+| HelaS3_50sync_50inter_H3K9ac_rep2 | ip   |               50 |                  50 | 24102172 |      680504 |      3627376 |     18461307 |   0.1876 |  0.03686 |   0.19649 |      28549 |     26.55 |            3.3147 |             26.6970 |            24.9501 | NA  |
+| HelaS3_50sync_50inter_H3K9ac_rep3 | ip   |               50 |                  50 | 17272978 |      472306 |      2262079 |     13658282 |   0.2088 |  0.03458 |   0.16562 |      24498 |     22.25 |            3.1097 |             22.5027 |            22.1354 | NA  |
+| HelaS3_25sync_75inter_H3K9ac_rep1 | ip   |               25 |                  75 | 26192648 |      568915 |      3115984 |     20997543 |   0.1826 |  0.02709 |   0.14840 |      27308 |     24.98 |            2.6611 |             19.1484 |            18.8880 | NA  |
+| HelaS3_25sync_75inter_H3K9ac_rep2 | ip   |               25 |                  75 | 23095083 |      525579 |      2815467 |     18448518 |   0.1867 |  0.02849 |   0.15261 |      27884 |     27.24 |            2.7986 |             19.6916 |            19.6410 | NA  |
+| HelaS3_25sync_75inter_H3K9ac_rep3 | ip   |               25 |                  75 | 21971781 |      429002 |      2096816 |     18136505 |   0.2046 |  0.02365 |   0.11561 |      21852 |     18.95 |            2.3232 |             14.9174 |            15.5898 | NA  |
+| HelaS3_5sync_95inter_H3K9ac_rep1  | ip   |                5 |                  95 | 13961566 |      291234 |      1569811 |     11304907 |   0.1855 |  0.02576 |   0.13886 |      27084 |     25.93 |            2.5230 |             19.4755 |            18.5683 | NA  |
+| HelaS3_5sync_95inter_H3K9ac_rep2  | ip   |                5 |                  95 | 23002199 |      413781 |      2036320 |     19071919 |   0.2032 |  0.02170 |   0.10677 |      24418 |     22.35 |            2.1254 |             14.9748 |            14.9262 | NA  |
+| HelaS3_5sync_95inter_H3K9ac_rep3  | ip   |                5 |                  95 | 20406280 |      397349 |      2202504 |     16560318 |   0.1804 |  0.02399 |   0.13300 |      27421 |     27.75 |            2.3497 |             18.6536 |            17.5506 | NA  |
+| HelaS3_0sync_100inter_H3K9ac_rep1 | ip   |                0 |                 100 | 24461245 |      388596 |      1852990 |     20952226 |   0.2097 |  0.01855 |   0.08844 |      21921 |     18.22 |            1.8550 |             11.8235 |            12.4043 | NA  |
+| HelaS3_0sync_100inter_H3K9ac_rep2 | ip   |                0 |                 100 | 21247480 |      414971 |      2080661 |     17513474 |   0.1994 |  0.02369 |   0.11880 |      27893 |     28.69 |            2.3690 |             15.8824 |            16.2327 | NA  |
+| HelaS3_0sync_100inter_H3K9ac_rep3 | ip   |                0 |                 100 | 20656642 |      396011 |      2143990 |     17006383 |   0.1847 |  0.02329 |   0.12607 |      27679 |     26.81 |            2.3290 |             16.8543 |            16.5786 | NA  |
 
 Normalize to Dual Spike-ins
 
@@ -716,3 +718,11 @@ ggplot() +
 ```
 
 ![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_spikenorm_publish_dotplot-1.png)
+
+Rsquared value:
+
+``` r
+get_Rsquared(AUC_peaks)
+```
+
+    [1] 0.9826761
