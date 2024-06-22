@@ -46,15 +46,28 @@ spike_correspondence_figure1b
   - <a href="#determine-normalization-factor-from-aligned-reads"
     id="toc-determine-normalization-factor-from-aligned-reads">Determine
     normalization factor from aligned reads:</a>
-  - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
-    id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
-    Signal at Peaks: Area under Histogram Curve</a>
-  - <a href="#make-line-of-expected-signal-1"
-    id="toc-make-line-of-expected-signal-1">Make line of expected
-    signal:</a>
-  - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
-    id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
-    Read normalized signal vs expected signal: Fig 1b</a>
+  - <a href="#normalize-to-fly-ipinput"
+    id="toc-normalize-to-fly-ipinput">Normalize to fly IP/input</a>
+    - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
+      id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
+      Signal at Peaks: Area under Histogram Curve</a>
+    - <a href="#make-line-of-expected-signal-1"
+      id="toc-make-line-of-expected-signal-1">Make line of expected
+      signal:</a>
+    - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
+      id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
+      Read normalized signal vs expected signal: Fig 1b</a>
+  - <a href="#normalize-to-yeast-spike-in"
+    id="toc-normalize-to-yeast-spike-in">Normalize to yeast spike-in</a>
+    - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-2"
+      id="toc-calculate-signal-at-peaks-area-under-histogram-curve-2">Calculate
+      Signal at Peaks: Area under Histogram Curve</a>
+    - <a href="#make-line-of-expected-signal-2"
+      id="toc-make-line-of-expected-signal-2">Make line of expected
+      signal:</a>
+    - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-2"
+      id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-2">Plot
+      Read normalized signal vs expected signal: Fig 1b</a>
 
 ``` r
 library(tidyverse)
@@ -104,11 +117,11 @@ LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36
 Genomes Downloaded with HOMER: hg38, dm6, sacCer3
 
 ``` bash
-perl /gpfs/data01/bennerlab/path/to/homer/configureHomer.pl -install hg38
+perl /path/to/homer/configureHomer.pl -install hg38
 
-perl /gpfs/data01/bennerlab/path/to/homer/configureHomer.pl -install dm6
+perl /path/to/homer/configureHomer.pl -install dm6
 
-perl /gpfs/data01/bennerlab/path/to/homer/configureHomer.pl -install sacCer3
+perl /path/to/homer/configureHomer.pl -install sacCer3
 ```
 
 Add chromosome suffixes to identify spike-in chromosomes
@@ -243,7 +256,7 @@ Repeat for dm6, sacCer3 genomes
 
 ### Histograms at TSS
 
-Recommended parameters for H3K79me2: Make histogram of size 4kb centered
+Recommended parameters for H3K9ac: Make histogram of size 4kb centered
 at TSS, with bin size 25bp.
 
 ``` bash
@@ -438,13 +451,6 @@ minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18
 ### Make line of expected signal:
 
 ``` r
-observed_line <- c(minmaxnorm_avg_100inter, 
-                   minmaxnorm_avg_95inter, 
-                   minmaxnorm_avg_75inter,  
-                   minmaxnorm_avg_50inter, 
-                   minmaxnorm_avg_25inter,  
-                   minmaxnorm_avg_0inter)
-
 expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
 
 percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
@@ -454,7 +460,7 @@ AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
 
 observed_vs_expected_LP78 <- data.frame(cbind(
   percent_inter_mean, percent_mit_mean, 
-  expected_line, observed_line))
+  expected_line))
 ```
 
 ### Plot Read normalized signal vs expected signal: Fig 1b
@@ -539,14 +545,14 @@ knitr::kable(H3K9ac_mitotic_titration_seqtatsIP)
 | HelaS3_0sync_100inter_H3K9ac_rep2 | ip   |                0 |                 100 | 21247480 |      414971 |      2080661 |     17513474 |   0.1994 |  0.02369 |   0.11880 |      27893 |     28.69 |            2.3690 |             15.8824 |            16.2327 | NA  |
 | HelaS3_0sync_100inter_H3K9ac_rep3 | ip   |                0 |                 100 | 20656642 |      396011 |      2143990 |     17006383 |   0.1847 |  0.02329 |   0.12607 |      27679 |     26.81 |            2.3290 |             16.8543 |            16.5786 | NA  |
 
-Normalize to Dual Spike-ins
+## Normalize to fly IP/input
 
 ``` r
 hist_K9ac_allsamples_LP78_tidyIP <- hist_K9ac_allsamples_LP78_tidy %>% 
   filter(grepl("H3K9ac", Sample))
 
 # copy the hist_tss_hg38_LH58_cov dataframe 
-peakcov_avg_ip_input_norm <- hist_K9ac_allsamples_LP78_tidyIP
+peakcov_fly_ip_input_norm <- hist_K9ac_allsamples_LP78_tidyIP
 
 sampleID <- unique(hist_K9ac_allsamples_LP78_tidyIP$Sample)
 
@@ -556,7 +562,7 @@ seqstatID <- sub('.Coverage', "", sampleID )
 # dataframe 2: H3K9ac_mitotic_titration_seqtatsIP
 # dataframe 3: peakcov_avg_ip_input_norm (output df)
 
-# When Sample rows of dataframe 1 match Sample.ID in dataframe 2, multiply Coverage column in df1 by factor in df2, assign to df3
+# When Sample rows of df1 match Sample.ID in df2, multiply Coverage column in df1 by factor in df2, assign to df3
 
 for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
   if (!hist_K9ac_allsamples_LP78_tidyIP[i, 2] %in% paste0(H3K9ac_mitotic_titration_seqtatsIP$Sample.ID, ".Coverage")) {
@@ -569,17 +575,17 @@ for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
  hist_K9ac_allsamples_LP78_tidyIP[grep(seqstatIDi, hist_K9ac_allsamples_LP78_tidyIP$Sample), ]
  # get normalization factor from sequencing stats (df3)
  
- normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 16]
+ normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 14]
  
  # multiply read_norm coverage by norm factor, assign to new df
-peakcov_avg_ip_input_norm[i, 3] <- 
+peakcov_fly_ip_input_norm[i, 3] <- 
   hist_K9ac_allsamples_LP78_tidyIP[i, 3]/(normfactori)
   
 }
 ```
 
 ``` r
-peakcov_avg_ip_input_norm_sepIP <- peakcov_avg_ip_input_norm[grep("K9ac", peakcov_avg_ip_input_norm$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+peakcov_fly_ip_input_norm_sepIP <- peakcov_fly_ip_input_norm[grep("K9ac", peakcov_fly_ip_input_norm$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
   cell = ".+", 
   "\\_", 
   ratio_sync = "[:digit:]+", 
@@ -595,17 +601,17 @@ peakcov_avg_ip_input_norm_sepIP <- peakcov_avg_ip_input_norm[grep("K9ac", peakco
 Fix ordering of mitotic and interphase cell ratios:
 
 ``` r
-peakcov_avg_ip_input_norm_sepIP$ratio_sync <- factor(peakcov_avg_ip_input_norm_sepIP$ratio_sync, levels = c(100, 75, 50, 25, 5, 0))
+peakcov_fly_ip_input_norm_sepIP$ratio_sync <- factor(peakcov_fly_ip_input_norm_sepIP$ratio_sync, levels = c(100, 75, 50, 25, 5, 0))
 
-peakcov_avg_ip_input_norm_sepIP$ratio_inter <- factor(peakcov_avg_ip_input_norm_sepIP$ratio_inter, levels = c(0, 25, 50, 75, 95, 100))
+peakcov_fly_ip_input_norm_sepIP$ratio_inter <- factor(peakcov_fly_ip_input_norm_sepIP$ratio_inter, levels = c(0, 25, 50, 75, 95, 100))
 ```
 
 ``` r
-ggplot(data = peakcov_avg_ip_input_norm_sepIP) + 
+ggplot(data = peakcov_fly_ip_input_norm_sepIP) + 
   aes(x = Distance_from_center, y = Coverage, group=interaction(ratio_inter, antibody, replicate), color = ratio_inter) + 
   geom_line(alpha = 0.9, linewidth = 1.1) + 
   labs(title = "Hela H3K9ac megasample peaks",
-       subtitle = "Dual Spike-in Normalized",
+       subtitle = "Normalized to Fly Spike-in",
        x = "Distance from Peak Center") +
   scale_color_manual(
     values = colorRampPalette(brewer.pal(9, "Blues"))(8)[3:8],
@@ -623,7 +629,7 @@ ggplot(data = peakcov_avg_ip_input_norm_sepIP) +
 ### Calculate Signal at Peaks: Area under Histogram Curve
 
 ``` r
-samples <- unique(peakcov_avg_ip_input_norm$Sample)
+samples <- unique(peakcov_fly_ip_input_norm$Sample)
 
 colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_center"
 x <- hist_K9ac_allsamples_LP78$Distance_from_center
@@ -633,7 +639,7 @@ AUC_peaks <- data.frame(AUC_peaks, row.names = samples)
 
 for (i in 1:length(samples)) {
 
-  y <- peakcov_avg_ip_input_norm %>% 
+  y <- peakcov_fly_ip_input_norm %>% 
     filter(Sample == samples[i]) %>%
     select(Coverage)
   y <- pull(y, Coverage)
@@ -680,13 +686,6 @@ minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18
 ### Make line of expected signal:
 
 ``` r
-observed_line <- c(minmaxnorm_avg_100inter, 
-                   minmaxnorm_avg_95inter, 
-                   minmaxnorm_avg_75inter,  
-                   minmaxnorm_avg_50inter, 
-                   minmaxnorm_avg_25inter,  
-                   minmaxnorm_avg_0inter)
-
 expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
 
 percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
@@ -696,7 +695,7 @@ AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
 
 observed_vs_expected_LP78 <- data.frame(cbind(
   percent_inter_mean, percent_mit_mean, 
-  expected_line, observed_line))
+  expected_line))
 ```
 
 ### Plot Read normalized signal vs expected signal: Fig 1b
@@ -711,13 +710,13 @@ ggplot() +
   geom_line(data = observed_vs_expected_LP78, 
             aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
  labs(title = "Relative H3K9ac Signal", 
-       subtitle = "Read Normalized, scaled 0-1",
+       subtitle = "Normalized to Drosophila spike-in, scaled 0-1",
        x = "% Mitotic Cells", 
        y = "Relative H3K9ac Signal") + 
   theme(legend.position = "none")
 ```
 
-![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_spikenorm_publish_dotplot-1.png)
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_flynorm_publish_dotplot-1.png)
 
 Rsquared value:
 
@@ -725,4 +724,197 @@ Rsquared value:
 get_Rsquared(AUC_peaks)
 ```
 
-    [1] 0.9826761
+    [1] 0.977569
+
+Save plot:
+
+``` r
+H3K9ac_titration_flynorm_publish_dotplot <- ggplot() +
+  geom_point(data = AUC_peaks, 
+             aes(x = as.numeric(mitotic), y = minmaxnorm), 
+             size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
+  scale_color_manual(name = "Cell Ratio", 
+    labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
+  geom_line(data = observed_vs_expected_LP78, 
+            aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
+ labs(title = "Relative H3K9ac Signal", 
+       subtitle = "Normalized to Drosophila spike-in, scaled 0-1",
+       x = "% Mitotic Cells", 
+       y = "Relative H3K9ac Signal") + 
+  theme(legend.position = "none")
+
+ggsave("H3K9ac_titration_flynorm_publish_dotplot.svg", H3K9ac_titration_flynorm_publish_dotplot, width = 4.5, height = 4.5)
+```
+
+## Normalize to yeast spike-in
+
+``` r
+hist_K9ac_allsamples_LP78_tidyIP <- hist_K9ac_allsamples_LP78_tidy %>% 
+  filter(grepl("H3K9ac", Sample))
+
+# copy the hist_tss_hg38_LH58_cov dataframe 
+peakcov_yeast_ip_input_norm <- hist_K9ac_allsamples_LP78_tidyIP
+
+sampleID <- unique(hist_K9ac_allsamples_LP78_tidyIP$Sample)
+
+seqstatID <- sub('.Coverage', "", sampleID )
+
+# dataframe 1: hist_K9ac_allsamples_LP78_tidy (original read-normalized data) 
+# dataframe 2: H3K9ac_mitotic_titration_seqtatsIP
+# dataframe 3: peakcov_avg_ip_input_norm (output df)
+
+# When Sample rows of df1 match Sample.ID in df2, multiply Coverage column in df1 by factor in df2, assign to df3
+
+for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
+  if (!hist_K9ac_allsamples_LP78_tidyIP[i, 2] %in% paste0(H3K9ac_mitotic_titration_seqtatsIP$Sample.ID, ".Coverage")) {
+    next()
+  }
+  
+  # make get current sampleID, remove .Coverage 
+ seqstatIDi <- sub('.Coverage', "", hist_K9ac_allsamples_LP78_tidyIP[i, 2] )
+ 
+ hist_K9ac_allsamples_LP78_tidyIP[grep(seqstatIDi, hist_K9ac_allsamples_LP78_tidyIP$Sample), ]
+ # get normalization factor from sequencing stats (df3)
+ 
+ normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 15]
+ 
+ # multiply read_norm coverage by norm factor, assign to new df
+peakcov_yeast_ip_input_norm[i, 3] <- 
+  hist_K9ac_allsamples_LP78_tidyIP[i, 3]/(normfactori)
+  
+}
+```
+
+``` r
+peakcov_yeast_ip_input_norm_sepIP <- peakcov_yeast_ip_input_norm[grep("K9ac", peakcov_yeast_ip_input_norm$Sample), ] %>% separate_wider_regex(cols = Sample, patterns = c(
+  cell = ".+", 
+  "\\_", 
+  ratio_sync = "[:digit:]+", 
+  "sync", "\\_", 
+  ratio_inter = "[:digit:]+", 
+  "inter", "\\_", 
+  antibody = ".+", 
+  "\\_", 
+  replicate = ".+", 
+  ".Coverage"))
+```
+
+Fix ordering of mitotic and interphase cell ratios:
+
+``` r
+peakcov_yeast_ip_input_norm_sepIP$ratio_sync <- factor(peakcov_yeast_ip_input_norm_sepIP$ratio_sync, levels = c(100, 75, 50, 25, 5, 0))
+
+peakcov_yeast_ip_input_norm_sepIP$ratio_inter <- factor(peakcov_yeast_ip_input_norm_sepIP$ratio_inter, levels = c(0, 25, 50, 75, 95, 100))
+```
+
+``` r
+ggplot(data = peakcov_yeast_ip_input_norm_sepIP) + 
+  aes(x = Distance_from_center, y = Coverage, group=interaction(ratio_inter, antibody, replicate), color = ratio_inter) + 
+  geom_line(alpha = 0.9, linewidth = 1.1) + 
+  labs(title = "Hela H3K9ac megasample peaks",
+       subtitle = "Normalized to Yeast Spike-in",
+       x = "Distance from Peak Center") +
+  scale_color_manual(
+    values = colorRampPalette(brewer.pal(9, "Blues"))(8)[3:8],
+    name = "Cell Ratio", 
+    labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) + 
+  theme_classic() + 
+  theme(legend.position = c(0.84, 0.76), 
+                          legend.background = element_rect(
+                                  size=0.7, linetype="solid", 
+                                  colour ="grey20")) 
+```
+
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_yeastnorm_histplot-1.png)
+
+### Calculate Signal at Peaks: Area under Histogram Curve
+
+``` r
+samples <- unique(peakcov_yeast_ip_input_norm$Sample)
+
+colnames(hist_K9ac_allsamples_LP78)[1] <- "Distance_from_center"
+x <- hist_K9ac_allsamples_LP78$Distance_from_center
+
+AUC_peaks <- matrix(data = "", nrow = length(samples), ncol = 1)
+AUC_peaks <- data.frame(AUC_peaks, row.names = samples)
+
+for (i in 1:length(samples)) {
+
+  y <- peakcov_yeast_ip_input_norm %>% 
+    filter(Sample == samples[i]) %>%
+    select(Coverage)
+  y <- pull(y, Coverage)
+
+AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
+
+}
+```
+
+Processing Signal at peaks, add expected line
+
+``` r
+AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+
+interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
+AUC_peaks$interphase <- as.numeric(interphase)
+```
+
+Scale points from 0-1
+
+``` r
+avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
+avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
+avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
+avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
+avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
+avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
+```
+
+``` r
+AUC_peaks <- AUC_peaks %>%
+  mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
+```
+
+``` r
+minmaxnorm_avg_0inter <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3], AUC_peaks[3,3]))
+minmaxnorm_avg_25inter <- mean(c(AUC_peaks[4,3], AUC_peaks[5,3], AUC_peaks[6,3]))
+minmaxnorm_avg_50inter <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3], AUC_peaks[9,3]))
+minmaxnorm_avg_75inter <- mean(c(AUC_peaks[10,3], AUC_peaks[11,3], AUC_peaks[12,3]))
+minmaxnorm_avg_95inter <- mean(c(AUC_peaks[13,3], AUC_peaks[14,3], AUC_peaks[15,3]))
+minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18,3]))
+```
+
+### Make line of expected signal:
+
+``` r
+expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
+
+percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
+
+percent_mit_mean <- rep(c(100, 75, 50, 25, 5, 0))
+AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
+
+observed_vs_expected_LP78 <- data.frame(cbind(
+  percent_inter_mean, percent_mit_mean, 
+  expected_line))
+```
+
+### Plot Read normalized signal vs expected signal: Fig 1b
+
+``` r
+ggplot() +
+  geom_point(data = AUC_peaks, 
+             aes(x = as.numeric(mitotic), y = minmaxnorm), 
+             size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
+  scale_color_manual(name = "Cell Ratio", 
+    labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
+  geom_line(data = observed_vs_expected_LP78, 
+            aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
+ labs(title = "Relative H3K9ac Signal", 
+       subtitle = "Normalized to Yeast spike-in, scaled 0-1",
+       x = "% Mitotic Cells", 
+       y = "Relative H3K9ac Signal") + 
+  theme(legend.position = "none")
+```
+
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_yeastnorm_publish_dotplot-1.png)
