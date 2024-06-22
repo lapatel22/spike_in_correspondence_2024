@@ -65,9 +65,10 @@ spike_correspondence_figure1b
     - <a href="#make-line-of-expected-signal-2"
       id="toc-make-line-of-expected-signal-2">Make line of expected
       signal:</a>
-    - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-2"
-      id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-2">Plot
-      Read normalized signal vs expected signal: Fig 1b</a>
+    - <a
+      href="#plot-read-normalized-signal-vs-expected-signal-supplemental-figure"
+      id="toc-plot-read-normalized-signal-vs-expected-signal-supplemental-figure">Plot
+      Read normalized signal vs expected signal: Supplemental Figure</a>
 
 ``` r
 library(tidyverse)
@@ -439,15 +440,6 @@ AUC_peaks <- AUC_peaks %>%
   mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
 ```
 
-``` r
-minmaxnorm_avg_0inter <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3], AUC_peaks[3,3]))
-minmaxnorm_avg_25inter <- mean(c(AUC_peaks[4,3], AUC_peaks[5,3], AUC_peaks[6,3]))
-minmaxnorm_avg_50inter <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3], AUC_peaks[9,3]))
-minmaxnorm_avg_75inter <- mean(c(AUC_peaks[10,3], AUC_peaks[11,3], AUC_peaks[12,3]))
-minmaxnorm_avg_95inter <- mean(c(AUC_peaks[13,3], AUC_peaks[14,3], AUC_peaks[15,3]))
-minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18,3]))
-```
-
 ### Make line of expected signal:
 
 ``` r
@@ -674,23 +666,9 @@ AUC_peaks <- AUC_peaks %>%
   mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
 ```
 
-``` r
-minmaxnorm_avg_0inter <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3], AUC_peaks[3,3]))
-minmaxnorm_avg_25inter <- mean(c(AUC_peaks[4,3], AUC_peaks[5,3], AUC_peaks[6,3]))
-minmaxnorm_avg_50inter <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3], AUC_peaks[9,3]))
-minmaxnorm_avg_75inter <- mean(c(AUC_peaks[10,3], AUC_peaks[11,3], AUC_peaks[12,3]))
-minmaxnorm_avg_95inter <- mean(c(AUC_peaks[13,3], AUC_peaks[14,3], AUC_peaks[15,3]))
-minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18,3]))
-```
-
 ### Make line of expected signal:
 
 ``` r
-expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
-
-percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
-
-percent_mit_mean <- rep(c(100, 75, 50, 25, 5, 0))
 AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
 
 observed_vs_expected_LP78 <- data.frame(cbind(
@@ -875,23 +853,9 @@ AUC_peaks <- AUC_peaks %>%
   mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
 ```
 
-``` r
-minmaxnorm_avg_0inter <- mean(c(AUC_peaks[1,3], AUC_peaks[2,3], AUC_peaks[3,3]))
-minmaxnorm_avg_25inter <- mean(c(AUC_peaks[4,3], AUC_peaks[5,3], AUC_peaks[6,3]))
-minmaxnorm_avg_50inter <- mean(c(AUC_peaks[7,3], AUC_peaks[8,3], AUC_peaks[9,3]))
-minmaxnorm_avg_75inter <- mean(c(AUC_peaks[10,3], AUC_peaks[11,3], AUC_peaks[12,3]))
-minmaxnorm_avg_95inter <- mean(c(AUC_peaks[13,3], AUC_peaks[14,3], AUC_peaks[15,3]))
-minmaxnorm_avg_100inter <- mean(c(AUC_peaks[16,3], AUC_peaks[17,3], AUC_peaks[18,3]))
-```
-
 ### Make line of expected signal:
 
 ``` r
-expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
-
-percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
-
-percent_mit_mean <- rep(c(100, 75, 50, 25, 5, 0))
 AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
 
 observed_vs_expected_LP78 <- data.frame(cbind(
@@ -899,7 +863,7 @@ observed_vs_expected_LP78 <- data.frame(cbind(
   expected_line))
 ```
 
-### Plot Read normalized signal vs expected signal: Fig 1b
+### Plot Read normalized signal vs expected signal: Supplemental Figure
 
 ``` r
 ggplot() +
@@ -917,4 +881,10 @@ ggplot() +
   theme(legend.position = "none")
 ```
 
-![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_yeastnorm_publish_dotplot-1.png)
+![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_yeastnorm_dotplot-1.png)
+
+``` r
+get_Rsquared(AUC_peaks)
+```
+
+    [1] 0.954441
