@@ -42,6 +42,12 @@ spike_correspondence_figure1b
     Signal at Peaks: Area under Histogram Curve</a>
   - <a href="#make-line-of-expected-signal"
     id="toc-make-line-of-expected-signal">Make line of expected signal:</a>
+  - <a href="#scale-signal-set-minimum-signal-to-0-maximum-signal-to-1"
+    id="toc-scale-signal-set-minimum-signal-to-0-maximum-signal-to-1">scale
+    signal, set minimum signal to 0, maximum signal to 1</a>
+  - <a href="#make-line-of-expected-signal-1"
+    id="toc-make-line-of-expected-signal-1">Make line of expected
+    signal:</a>
   - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b"
     id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b">Plot Read
     normalized signal vs expected signal: Fig 1b</a>
@@ -56,9 +62,11 @@ spike_correspondence_figure1b
     - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-1"
       id="toc-calculate-signal-at-peaks-area-under-histogram-curve-1">Calculate
       Signal at Peaks: Area under Histogram Curve</a>
-    - <a href="#make-line-of-expected-signal-1"
-      id="toc-make-line-of-expected-signal-1">Make line of expected
-      signal:</a>
+    - <a
+      href="#scale-signal-at-peaks-to-be-from-0-1-plot-this-normalized-signal-against-expected-signal"
+      id="toc-scale-signal-at-peaks-to-be-from-0-1-plot-this-normalized-signal-against-expected-signal">Scale
+      signal at peaks to be from 0-1, plot this normalized signal against
+      expected signal</a>
     - <a href="#plot-read-normalized-signal-vs-expected-signal-fig-1b-1"
       id="toc-plot-read-normalized-signal-vs-expected-signal-fig-1b-1">Plot
       Read normalized signal vs expected signal: Fig 1b</a>
@@ -67,9 +75,6 @@ spike_correspondence_figure1b
     - <a href="#calculate-signal-at-peaks-area-under-histogram-curve-2"
       id="toc-calculate-signal-at-peaks-area-under-histogram-curve-2">Calculate
       Signal at Peaks: Area under Histogram Curve</a>
-    - <a href="#make-line-of-expected-signal-2"
-      id="toc-make-line-of-expected-signal-2">Make line of expected
-      signal:</a>
     - <a
       href="#plot-read-normalized-signal-vs-expected-signal-supplemental-figure"
       id="toc-plot-read-normalized-signal-vs-expected-signal-supplemental-figure">Plot
@@ -460,31 +465,6 @@ AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
 }
 ```
 
-Processing Signal at peaks, add expected line
-
-``` r
-AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
-
-interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
-AUC_peaks$interphase <- as.numeric(interphase)
-```
-
-Scale points from 0-1
-
-``` r
-avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
-avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
-avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
-avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
-avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
-avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
-```
-
-``` r
-AUC_peaks <- AUC_peaks %>%
-  mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
-```
-
 ### Make line of expected signal:
 
 ``` r
@@ -493,23 +473,54 @@ expected_line <- c(0, 0.25, 0.5, 0.75, 0.95, 1)
 percent_inter_mean <- rep(c(0, 25, 50, 75, 95, 100))
 
 percent_mit_mean <- rep(c(100, 75, 50, 25, 5, 0))
-AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
+```
 
-observed_vs_expected_LP78 <- data.frame(cbind(
-  percent_inter_mean, percent_mit_mean, 
-  expected_line))
+### scale signal, set minimum signal to 0, maximum signal to 1
+
+``` r
+scale_AUC_minmaxnorm <- function(AUC_peaks) {
+  AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+  
+  interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
+  AUC_peaks$interphase <- as.numeric(interphase)
+  
+  # Minmax normalization: Scale points from 0-1
+  avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
+  avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
+  avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
+  avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
+  avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
+  avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
+  
+  AUC_peaks_minmaxnorm <- AUC_peaks %>%
+    mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
+}
+```
+
+``` r
+AUC_peaks_readnorm_minmaxnorm <- scale_AUC_minmaxnorm(AUC_peaks)
+```
+
+### Make line of expected signal:
+
+``` r
+# make variable for % mitotic cells
+AUC_peaks_readnorm_minmaxnorm$mitotic <- rep(percent_mit_mean, each = 3)
+
+# dataframe of expected line
+observed_vs_expected_line <- data.frame(cbind(percent_mit_mean, expected_line))
 ```
 
 ### Plot Read normalized signal vs expected signal: Fig 1b
 
 ``` r
 ggplot() +
-  geom_point(data = AUC_peaks, 
+  geom_point(data = AUC_peaks_readnorm_minmaxnorm, 
              aes(x = as.numeric(mitotic), y = minmaxnorm), 
              size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
   scale_color_manual(name = "Cell Ratio", 
     labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
-  geom_line(data = observed_vs_expected_LP78, 
+  geom_line(data = observed_vs_expected_line, 
             aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
  labs(title = "Relative H3K9ac Signal", 
        subtitle = "Read Normalized, scaled 0-1",
@@ -539,7 +550,7 @@ get_Rsquared <- function(AUC_peaks) {
 ```
 
 ``` r
-get_Rsquared(AUC_peaks)
+get_Rsquared(AUC_peaks_readnorm_minmaxnorm)
 ```
 
     [1] 0.06828471
@@ -609,8 +620,8 @@ for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
   # make get current sampleID, remove .Coverage 
  seqstatIDi <- sub('.Coverage', "", hist_K9ac_allsamples_LP78_tidyIP[i, 2] )
  
- hist_K9ac_allsamples_LP78_tidyIP[grep(seqstatIDi, hist_K9ac_allsamples_LP78_tidyIP$Sample), ]
  # get normalization factor from sequencing stats (df3)
+ # Col 14 in seqstats dataframe contains fly normalization factor
  
  normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 14]
  
@@ -686,51 +697,28 @@ AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
 }
 ```
 
-Processing Signal at peaks, add expected line
+### Scale signal at peaks to be from 0-1, plot this normalized signal against expected signal
 
 ``` r
-AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+AUC_peaks_fly_minmaxnorm <- scale_AUC_minmaxnorm(AUC_peaks)
 
-interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
-AUC_peaks$interphase <- as.numeric(interphase)
-```
-
-Scale points from 0-1
-
-``` r
-avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
-avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
-avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
-avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
-avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
-avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
+AUC_peaks_fly_minmaxnorm$mitotic <- rep(percent_mit_mean, each = 3)
 ```
 
 ``` r
-AUC_peaks <- AUC_peaks %>%
-  mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
-```
-
-### Make line of expected signal:
-
-``` r
-AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
-
-observed_vs_expected_LP78 <- data.frame(cbind(
-  percent_inter_mean, percent_mit_mean, 
-  expected_line))
+#observed_vs_expected_LP78 <- data.frame(cbind(percent_inter_mean, percent_mit_mean, expected_line))
 ```
 
 ### Plot Read normalized signal vs expected signal: Fig 1b
 
 ``` r
 ggplot() +
-  geom_point(data = AUC_peaks, 
+  geom_point(data = AUC_peaks_fly_minmaxnorm, 
              aes(x = as.numeric(mitotic), y = minmaxnorm), 
              size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
   scale_color_manual(name = "Cell Ratio", 
     labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
-  geom_line(data = observed_vs_expected_LP78, 
+  geom_line(data = observed_vs_expected_line, 
             aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
  labs(title = "Relative H3K9ac Signal", 
        subtitle = "Normalized to Drosophila spike-in, scaled 0-1",
@@ -744,7 +732,7 @@ ggplot() +
 Rsquared value:
 
 ``` r
-get_Rsquared(AUC_peaks)
+get_Rsquared(AUC_peaks_fly_minmaxnorm)
 ```
 
     [1] 0.977569
@@ -753,12 +741,12 @@ Save plot:
 
 ``` r
 H3K9ac_titration_flynorm_publish_dotplot <- ggplot() +
-  geom_point(data = AUC_peaks, 
+  geom_point(data = AUC_peaks_fly_minmaxnorm, 
              aes(x = as.numeric(mitotic), y = minmaxnorm), 
              size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
   scale_color_manual(name = "Cell Ratio", 
     labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
-  geom_line(data = observed_vs_expected_LP78, 
+  geom_line(data = observed_vs_expected_line, 
             aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
  labs(title = "Relative H3K9ac Signal", 
        subtitle = "Normalized to Drosophila spike-in, scaled 0-1",
@@ -796,9 +784,9 @@ for (i in 1:nrow(hist_K9ac_allsamples_LP78_tidyIP)) {
   # make get current sampleID, remove .Coverage 
  seqstatIDi <- sub('.Coverage', "", hist_K9ac_allsamples_LP78_tidyIP[i, 2] )
  
- hist_K9ac_allsamples_LP78_tidyIP[grep(seqstatIDi, hist_K9ac_allsamples_LP78_tidyIP$Sample), ]
  # get normalization factor from sequencing stats (df3)
- 
+ # Col 15 in seqstats dataframe contains yeast normalization factor
+
  normfactori <- H3K9ac_mitotic_titration_seqtatsIP[grep(seqstatIDi, H3K9ac_mitotic_titration_seqtatsIP$Sample.ID), 15]
  
  # multiply read_norm coverage by norm factor, assign to new df
@@ -876,48 +864,21 @@ AUC_peaks[i, ] <- AUC(x, y, method = c("trapezoid"))
 Processing Signal at peaks, add expected line
 
 ``` r
-AUC_peaks$AUC_peaks <- as.numeric(AUC_peaks$AUC_peaks)
+AUC_peaks_yeast_minmaxnorm <- scale_AUC_minmaxnorm(AUC_peaks)
 
-interphase <- rep(c(0, 25, 50, 75, 95, 100), each = 3)
-AUC_peaks$interphase <- as.numeric(interphase)
-```
-
-Scale points from 0-1
-
-``` r
-avg_0inter <- mean(c(AUC_peaks[1,1], AUC_peaks[2,1], AUC_peaks[3,1]))
-avg_25inter <- mean(c(AUC_peaks[4,1], AUC_peaks[5,1], AUC_peaks[6,1]))
-avg_50inter <- mean(c(AUC_peaks[7,1], AUC_peaks[8,1], AUC_peaks[9,1]))
-avg_75inter <- mean(c(AUC_peaks[10,1], AUC_peaks[11,1], AUC_peaks[12,1]))
-avg_95inter <- mean(c(AUC_peaks[13,1], AUC_peaks[14,1], AUC_peaks[15,1]))
-avg_100inter <- mean(c(AUC_peaks[16,1], AUC_peaks[17,1], AUC_peaks[18,1]))
-```
-
-``` r
-AUC_peaks <- AUC_peaks %>%
-  mutate(minmaxnorm = (AUC_peaks-avg_0inter)/(avg_100inter-avg_0inter) )
-```
-
-### Make line of expected signal:
-
-``` r
-AUC_peaks$mitotic <- rep(percent_mit_mean, each = 3)
-
-observed_vs_expected_LP78 <- data.frame(cbind(
-  percent_inter_mean, percent_mit_mean, 
-  expected_line))
+AUC_peaks_yeast_minmaxnorm$mitotic <- rep(percent_mit_mean, each = 3)
 ```
 
 ### Plot Read normalized signal vs expected signal: Supplemental Figure
 
 ``` r
 ggplot() +
-  geom_point(data = AUC_peaks, 
+  geom_point(data = AUC_peaks_yeast_minmaxnorm, 
              aes(x = as.numeric(mitotic), y = minmaxnorm), 
              size = 2, alpha = 0.7, shape = 3, color = "grey30", stroke = 3) +
   scale_color_manual(name = "Cell Ratio", 
     labels = c("0% interphase", "25% interphase", "50% interphase", "75% interphase", "95% interphase", "100% interphase")) +
-  geom_line(data = observed_vs_expected_LP78, 
+  geom_line(data = observed_vs_expected_line, 
             aes(x = as.numeric(percent_mit_mean), y = expected_line), linewidth = 1.1, color = "grey30") +
  labs(title = "Relative H3K9ac Signal", 
        subtitle = "Normalized to Yeast spike-in, scaled 0-1",
@@ -929,7 +890,7 @@ ggplot() +
 ![](spike_correspondence_figure1b_files/figure-commonmark/H3K9ac_titration_yeastnorm_dotplot-1.png)
 
 ``` r
-get_Rsquared(AUC_peaks)
+get_Rsquared(AUC_peaks_yeast_minmaxnorm)
 ```
 
     [1] 0.954441
