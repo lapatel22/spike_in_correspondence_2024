@@ -1,6 +1,9 @@
 spike_correspondence_figure1a
 ================
 
+- <a href="#orlando-et-al.-estimated-signal-from-western-blot"
+  id="toc-orlando-et-al.-estimated-signal-from-western-blot">Orlando et
+  al. Estimated Signal from Western blot</a>
 - <a href="#orlando-et-al-chip-rx-titration-of-h3k79me2"
   id="toc-orlando-et-al-chip-rx-titration-of-h3k79me2">Orlando et al:
   ChIP-Rx Titration of H3K79me2</a>
@@ -67,6 +70,58 @@ library(tidyverse)
     ✖ dplyr::filter() masks stats::filter()
     ✖ dplyr::lag()    masks stats::lag()
     ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+# Orlando et al. Estimated Signal from Western blot
+
+``` r
+chiprx_western <- read.delim("~/Research/spike_commentary/chiprx_westernblot_quantification.tsv")
+```
+
+``` r
+ggplot(chiprx_western) + 
+  aes(x = X..inhibition, y = signal) + 
+  geom_col() + 
+  scale_x_continuous(breaks=seq(0,100,25)) +
+  labs(x = "% of DOT1 Inhibited Cells", y = "Western Blot Signal") 
+```
+
+![](spike_correspondence_figure1a_files/figure-commonmark/unnamed-chunk-3-1.png)
+
+``` r
+chiprx_western_plot <- ggplot(chiprx_western) + 
+  aes(x = X..inhibition, y = signal) + 
+  geom_col() + 
+  scale_x_continuous(breaks=seq(0,100,25)) +
+  labs(x = "% of DOT1 Inhibited Cells", y = "Western Blot Signal") 
+
+ggsave("chiprx_western_plot.svg", chiprx_western_plot, width = 5, height =4)
+```
+
+``` r
+ggplot(chiprx_western) + 
+  aes(x = X..inhibition, y = signal/min(signal)) + 
+  geom_col() + 
+  scale_x_continuous(breaks=seq(0,100,25)) +
+  scale_y_continuous(breaks=seq(0,11,2)) +
+  geom_hline(yintercept = 1) +
+  labs(title = "Estimating H3K79me2 Signal from Western Blot", 
+       x = "% of DOT1 Inhibited Cells", y = "H3K79me2 Signal Relative to Minimum (100% Inhibition)") 
+```
+
+![](spike_correspondence_figure1a_files/figure-commonmark/chiprx_scaledwestern_plot_publish-1.png)
+
+``` r
+chiprx_scaledwestern_plot <- ggplot(chiprx_western) + 
+  aes(x = X..inhibition, y = signal/min(signal)) + 
+  geom_col() + 
+  scale_x_continuous(breaks=seq(0,100,25)) +
+  scale_y_continuous(breaks=seq(0,11,2)) +
+  geom_hline(yintercept = 1) +
+  labs(title = "Estimating H3K79me2 Signal from Western Blot", 
+       x = "% of DOT1 Inhibited Cells", y = "H3K79me2 Signal Relative to Minimum (100% Inhibition)") 
+
+ggsave("chiprx_scaledwestern_plot.svg", chiprx_scaledwestern_plot, width = 6, height = 5)
+```
 
 # Orlando et al: ChIP-Rx Titration of H3K79me2
 
@@ -242,7 +297,10 @@ library(DescTools) ## need for calculating AUC
 ### import sequencing statistics file
 
 ``` r
-chiprx_stats <- read_excel("my_chiprx_stats.xlsx")
+public_data_submit_revisions <- read_delim("~/Research/spike_commentary/public_data_submit_revisions.tsv")
+
+chiprx_sequencingstats <- public_data_submit_revisions %>%
+  filter(Author == "Orlando")
 ```
 
 ``` r
