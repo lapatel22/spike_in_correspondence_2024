@@ -1,7 +1,12 @@
 spike_correspondence_figure1b
 ================
 
-- <a href="#our-dataset" id="toc-our-dataset">Our dataset</a>
+- <a
+  href="#estimatinginterphasemitotic-h3k9ac-with-mass-spectrometry-data"
+  id="toc-estimatinginterphasemitotic-h3k9ac-with-mass-spectrometry-data">EstimatingInterphase/Mitotic
+  H3K9ac with Mass Spectrometry Data</a>
+- <a href="#chip-seq-titration-of-h3k9ac"
+  id="toc-chip-seq-titration-of-h3k9ac">ChIP-seq Titration of H3K9ac</a>
   - <a href="#trimming-.fastq-files" id="toc-trimming-.fastq-files">Trimming
     .FASTQ Files</a>
   - <a href="#alignment-.fastq---.sam"
@@ -97,7 +102,47 @@ library(DescTools)
 
     Warning: package 'DescTools' was built under R version 4.3.3
 
-# Our dataset
+# EstimatingInterphase/Mitotic H3K9ac with Mass Spectrometry Data
+
+``` r
+javasky_H3K9ac_massspec <- read.delim("~/Research/spike_commentary/javasky_2018_massspec_H3K9ac_only.txt")
+```
+
+``` r
+javasky_H3K9ac_massspec$relative_abundance <- as.numeric(javasky_H3K9ac_massspec$relative_abundance)
+```
+
+``` r
+javasky_H3K9ac_massspec$Sample <- factor(javasky_H3K9ac_massspec$Sample, levels = c("H3K9ac_unsync", "H3K9ac_sync"))
+```
+
+``` r
+ggplot(javasky_H3K9ac_massspec) + 
+  aes(x = Sample, y = relative_abundance) + 
+  geom_col() + 
+  geom_errorbar(aes(ymin = relative_abundance- sd, ymax = relative_abundance + sd), width = 0.2) + 
+  labs(title = "Relative Abundance of H3K9ac in Mitotic and Interphase HeLa-S3 Cells",
+       subtitle = "Quantified with Mass-Spectrometry in Javasky et al 2018", 
+       x = "Sample", 
+       y = "Relative Abundance (%)")
+```
+
+![](spike_correspondence_figure1b_files/figure-commonmark/javasky_H3K9ac_massspec_plot_publish-1.png)
+
+``` r
+javasky_H3K9ac_massspec_plot <- ggplot(javasky_H3K9ac_massspec) + 
+  aes(x = Sample, y = relative_abundance) + 
+  geom_col() + 
+  geom_errorbar(aes(ymin = relative_abundance- sd, ymax = relative_abundance + sd), width = 0.2) + 
+  labs(title = "Relative Abundance of H3K9ac in Mitotic and Interphase HeLa-S3 Cells",
+       subtitle = "Quantified with Mass-Spectrometry in Javasky et al 2018", 
+       x = "Sample", 
+       y = "Relative Abundance (%)")
+
+ggsave("javasky_H3K9ac_massspec_plot.svg", javasky_H3K9ac_massspec_plot, width = 6, height = 5)
+```
+
+# ChIP-seq Titration of H3K9ac
 
 Sequenced on NextSeq 550, demultiplexed with Illumina bcl2fastq
 
