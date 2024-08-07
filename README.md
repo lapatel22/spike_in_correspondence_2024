@@ -1,5 +1,5 @@
-# spike_in_correspondence_2024
-Data and code repository for spike-in normalization correspondence
+# spike_in_comment_2024
+Data and code repository for spike-in normalization comment.
 
 Code for generating Figures: <br>
 Figure 1: Benchmarking Spike-in Normalization <br>
